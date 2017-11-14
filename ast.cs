@@ -20,6 +20,7 @@ class AST
         //check if multiple statements
         var tokens = new List<string>(commands);
         int commandNum = 1;
+            int numSelected = 0;
         if (tokens.Contains("or") )
         {
             //ask user which one to do?
@@ -38,19 +39,19 @@ class AST
                     option = number.ToString() + ". ";
                 }
             }
-            int numSelected = 0;
             while (numSelected <= 0 || numSelected > number)
             {
                 Console.WriteLine(option);
                 Console.Write("> ");
                 var commandInput = Console.ReadLine();
-                numSelected = commandInput.ToInt32();
+                numSelected = Convert.ToInt32(commandInput);
             }
             commandNum = numSelected;
         }
 
         int offset = (numSelected - 1) * 4;
-        if (offset > 0) offset--;
+        if (numSelected == 0) offset = 0;
+        Console.WriteLine("num: " + numSelected + " offset: " + offset + " token: " + commands[offset+1]);
         var amount = Convert.ToInt32(commands[offset+1]);
         var kind = commands[offset+2];
         if (nouns.ContainsKey(kind))
@@ -97,6 +98,7 @@ class Program
         player.inventory["coin"] = 4;
         player.inventory["power"] = 2;
         player.inventory["metal"] = 0;
+        player.inventory["heart"] = 2;
         
         GameLogic gl = new GameLogic();
         gl.ParseRule();
