@@ -6,11 +6,28 @@ class GameLogic
 {
     Dictionary<string, string> verbs = new Dictionary<string, string>();
     Dictionary<string, string> nouns = new Dictionary<string, string>();
-    string ruleText = @"verb: bolster, trade
-    noun: coin, power, resource, metal, oil, wood, food, worker, mech, building
+    string ruleText = @"verb: bolster, trade, produce, move
+    noun: coin, power, resource, metal, oil, wood, food, worker, mech, building, tile, upgrade, recruit, worker, character
     resource: metal, oil, wood, food
     bolster: pay 1 coin, gain 2 power or gain 1 heart
-    trade: pay 2 coin, gain 2 resource";
+    trade: pay 2 coin, gain 2 resource
+    produce: for 2 tiles, gain one resource per worker
+    move: move 2 units by 1 tile each or gain 2 coins
+    deploy: pay 1 coin, gain 1 mech on a worker tile
+    build: pay 1 coin, gain 1 building on a worker tile
+    enlist: pay 1 coin, gain 1 recruit
+    upgrade: pay 1 coin, gain 1 upgrade
+    card: action card, mech card, building card
+    faction: polania, saxony, khanate, nordic
+    polania: gain 2 heart, gain 4 coin, gain 2 power, gain 3 combat card 
+    :gain 1 character and gain 2 worker
+    :mechs: gain 1 move per unit, cross river, lake move
+    rule: 
+    combat: win by combat number, loser units flee back to home base
+    confrontation: worker flee
+    flee: worker move to home base if confronted, mover lose 1 heart per worker
+    combat card: random range between 2 to 5";
+
     AST ast = new AST();
     public void ExecuteAction(string exec, ref Player player)
     {
