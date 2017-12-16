@@ -65,19 +65,18 @@ namespace HexBDL
             if (node.left != null)
             {
             Console.Write("\t->L" + i + " ");
-            i++;
-            PrintTree(node.left, i);
+            PrintTree(node.left, i+1);
             }
             if (node.right == null)
                 return;
-            string tabs = "";
+            string tabs = "\t";
             for(int idx=0; idx < i; idx++)
             {
                 tabs += "\t";
             }
             Console.WriteLine("");
             Console.Write(tabs + "->R" + i + " ");
-            PrintTree(node.right, i);
+            PrintTree(node.right, i+1);
         }
     }
     //head -> if -> condition
@@ -90,8 +89,17 @@ namespace HexBDL
     //                   -> c
     class Parser
     {
-        //string rule = "bolster: if pay 2 coin with 3 block then ( ( gain 1 power with 2 block or gain 2 any resources ) and gain 1 heart )";
-        string rule = "a + b - c";
+        bool simple = false;
+        string ruleBolster = "bolster: if pay 2 coin with 3 block then ((gain 1 power with 2 block or gain 2 any resources) and gain 1 heart)";
+        //rule ->L if ->L condition
+        //            ->R ThenElse ->L then expression
+        //                         ->R else expression
+        //   ->R next expression
+        //condition: can pay 2 coin ->L with 3 block
+        //then:      and ->L gain 1 heart
+        //               ->R or ->L gain 1 power ->L with 2 block
+        //                      ->R gain 2 any resource
+        string ruleSimple = "a + (b - c + (d * f + (g / h )))";
 
         ASTNode head = new ASTNode("head"); //empty?
         ASTNode node = null;
@@ -99,47 +107,122 @@ namespace HexBDL
         {
             node = head;
         }
+        public void FormatInput(ref string s)
+        {  
+            Console.WriteLine("s: " + s);
+            var prevIsParan = false;
+            //add spaces before and after parens
+            for( var i = s.Length-1; i > 0; i-- )
+            {
+                var curChar = s[i];
+                if (prevIsParan && curChar != ' ')
+                {
+                    s = s.Insert(i+1, " ");
+                }
+                prevIsParan = false;
+                if (curChar == '(' ||
+                    curChar == ')')
+                {
+                    prevIsParan = true;
+                    s = s.Insert(i+1, " ");
+                }
+            }
+            //delete duplicate spaces
+            var prevIsSpace = false;
+            for( var i = s.Length-1; i > 0; i-- )
+            {
+                var curChar = s[i];
+                if (prevIsSpace && curChar == ' ')
+                {
+                    s = s.Remove(i, 1);
+                }
+                prevIsSpace = false;
+                if (curChar == ' ')
+                {
+                    prevIsSpace = true;
+                }
+            }
+            Console.WriteLine("after format s: " + s);
+        }
         public void Parse() {
             char[] del = {':', ' '};
-            var tokens_ = rule.Split(del);
-            List<string> tokens = new List<string>(tokens_);
             //foreach(var token in tokens)
             Console.WriteLine("parsing parenthesises");
-            int ii=0;
-                var node = ParseExpressionSY(tokens, ref ii);
+            if (simple)
+            {
+                int ii=0;
+                FormatInput(ref ruleSimple);
+                Console.WriteLine(ruleSimple);
+                var tokens_ = ruleSimple.Split(del);
+                List<string> tokens = new List<string>(tokens_);
+                node = ParseExpressionSY(tokens, ref ii);
+            } else {
+                FormatInput(ref ruleBolster);
+                var tokens_ = ruleBolster.Split(del);
+                List<string> tokens = new List<string>(tokens_);
+                var e = tokens.GetEnumerator();
+                node = ParseRule(ref e);
+            }
+
                 ASTNode.PrintTree(node, 0);
                 Console.WriteLine("");
-            for (int i=0; i<tokens.Count; i++)
+            
+            Console.WriteLine("finished parsing parenthesises");
+        }
+        ASTNode ParseRule(ref List<string>.Enumerator e)
+        {
+            Stack<ASTNode> outputs = new Stack<ASTNode>();
+            var ruleNode = new ASTNode(e.Current);
+            //pack into operands and outputs
+            while (e.MoveNext())
             {
+                if (e.Current == "if")
+                {
+                    outputs.Push(ParseIfThen(ref e));
+                } else
+                {
+
+                }
+            }
+            return ruleNode;
+        }
+        //expects enumerator pointing to token after if
+        ASTNode ParseIfThen(ref List<string>.Enumerator e)
+        {
+            var ifNode = new ASTNode("if");
+            var thenElseNode = new ASTNode("thenElse");
+            ifNode.right = thenElseNode;
+            //basic parse conditions
+            //parse then
+            //parse else
+            while( e.MoveNext())
+            {
+                Console.WriteLine(e.Current + ", ");
+                continue;
                 //ParseExpression(ref node, tokens, ref i);
-                continue;
-                ParseParen(tokens, ref i);
-                continue;
                 if (node == null)
                     node = new ASTNode("temp");
-                node.action = tokens[i];
-                if (tokens[i] == "if")
+                node.action = e.Current;
+                if (e.Current == "if")
                 {
+                    e.MoveNext();
+                    var subIfNode = ParseIfThen(ref e);
                     //node.left = ParseCondition(tokens, ref i);
                     //node.right = ParseThen(tokens, ref i);
                 } else 
-                if (tokens[i] == "then")
+                if (e.Current == "then")
                 {
                     var prev = node;
                     node = new ASTNode("then");
                     prev.right = node;
                 } else 
-                if (tokens[i] == "pay")
+                if (e.Current == "pay")
                 {
 
                 }
-                Console.WriteLine(tokens[i]);
+                Console.WriteLine(e.Current);
             }
-            Console.WriteLine("finished parsing parenthesises");
-        }
-        void ParseCondition(List<string> tokens, ref int i)
-        {
-            //basic parse conditions
+            return ifNode;
         }
         Stack<List<string>> parenStack = new Stack<List<string>>();
         //
@@ -163,6 +246,7 @@ namespace HexBDL
                 list.Add(tokens[i]);
             }
         }
+
         //a + b - c
         //- -> c
         //  -> + -> a
@@ -177,22 +261,34 @@ namespace HexBDL
         {
             Stack<ASTNode> outputs = new Stack<ASTNode>();
             Stack<ASTNode> ops = new Stack<ASTNode>();
-            for( int ii = i; ii < tokens.Count; ii++)
+            //pack tokens into output/ops stack
+            for( ; i < tokens.Count; i++)
             {
-                var token = tokens[ii];
-                if (IsOperator(token))
-                {
-                    ops.Push(new ASTNode(token));
-                } else 
+                var token = tokens[i];
+                var newNode = new ASTNode(token);
                 if (IsParen(token))
                 {
-                    //if (tokens[i] == ")")
-                        //return root
-                    //create a new set ouf outputs/ops?
-                    //outputs.Add(ParseExpressionSY(tokens, ref i));
+                    if (token == ")")
+                    {
+                        i++;
+                        break; //stop packing; assemble AST if any, go up 1 level
+                    } else 
+                    if (token == "(")
+                    {
+                        //go 1 level down!
+                        i++;
+                       newNode = ParseExpressionSY(tokens, ref i);
+                       outputs.Push(newNode);
+                    } else {
+                        Console.WriteLine("ERROR!");
+                    }
                 } else
+                if (IsOperator(token))
                 {
-                    outputs.Push(new ASTNode(token));
+                    ops.Push(newNode);
+                } else 
+                {
+                    outputs.Push(newNode);
                 }
             }
             Console.WriteLine("outputs: ");
@@ -208,7 +304,13 @@ namespace HexBDL
                 var node = ops.Pop();
                 if (prevNode != null)
                     prevNode.left = node;
+                var os = " ";
+                foreach (var n in outputs)
+                    os += n.action + ", ";
+                Console.WriteLine("curr Node: " + node.action + os);
                 node.right = outputs.Pop();
+                if (ops.Count == 0 && outputs.Count > 0)
+                    node.left = outputs.Pop();
                 prevNode = node;
             }
             return root;
@@ -217,7 +319,12 @@ namespace HexBDL
         bool IsOperator(string token)
         {
             return (token == "+")
-                || token == "-"
+                || token == "-" 
+                || token == "*"
+                || token == "/"
+                || token == "if"
+                || token == "thenElse"
+                //check if token in operator dictionary (user extendable)
                 ;
         }
         bool IsParen(string token)

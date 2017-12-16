@@ -90,9 +90,9 @@ class AST
     }
     public AST() {}
 }
-class Program
+class NProgram
 {
-    static void Main()
+    static void NMain()
     {
         Player player = new Player();
         Console.WriteLine("Hello, World!");
