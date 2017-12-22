@@ -87,10 +87,13 @@ namespace HexBDL
     //head -> op1 -> a
     //            -> op2 -> b
     //                   -> c
+    
     class Parser
     {
+        Dictionary<string, ASTNode> ruleList = new Dictionary<string,ASTNode>();
         bool simple = false;
-        string ruleBolster = "bolster: if pay 2 coin with 3 block then ((gain 1 power with 2 block or gain 2 any resources) and gain 1 heart)";
+        string ruleBolster = "bolster: pay 2 coin"; 
+        //string ruleBolster = "bolster: if pay 2 coin with 3 block then ((gain 1 power with 2 block or gain 2 any resources) and gain 1 heart) endif";
         //rule ->L if ->L condition
         //            ->R ThenElse ->L then expression
         //                         ->R else expression
@@ -100,6 +103,8 @@ namespace HexBDL
         //               ->R or ->L gain 1 power ->L with 2 block
         //                      ->R gain 2 any resource
         string ruleSimple = "a + (b - c + (d * f + (g / h )))";
+        List<string> opList = new List<string> {"+", "-", "/", "*", "and", "or"};
+        List<string> verbList = new List<string> {"pay", "gain", "block"};
 
         ASTNode head = new ASTNode("head"); //empty?
         ASTNode node = null;
@@ -127,6 +132,7 @@ namespace HexBDL
                     s = s.Insert(i+1, " ");
                 }
             }
+            s = s.Trim();
             //delete duplicate spaces
             var prevIsSpace = false;
             for( var i = s.Length-1; i > 0; i-- )
@@ -145,7 +151,7 @@ namespace HexBDL
             Console.WriteLine("after format s: " + s);
         }
         public void Parse() {
-            char[] del = {':', ' '};
+            char[] del = {' '};
             //foreach(var token in tokens)
             Console.WriteLine("parsing parenthesises");
             if (simple)
@@ -160,6 +166,9 @@ namespace HexBDL
                 FormatInput(ref ruleBolster);
                 var tokens_ = ruleBolster.Split(del);
                 List<string> tokens = new List<string>(tokens_);
+                Console.Write("raw tokens: ");
+                foreach(var token in tokens) Console.Write(token + ", ");
+                Console.WriteLine("");
                 var e = tokens.GetEnumerator();
                 node = ParseRule(ref e);
             }
@@ -171,19 +180,10 @@ namespace HexBDL
         }
         ASTNode ParseRule(ref List<string>.Enumerator e)
         {
-            Stack<ASTNode> outputs = new Stack<ASTNode>();
-            var ruleNode = new ASTNode(e.Current);
-            //pack into operands and outputs
-            while (e.MoveNext())
-            {
-                if (e.Current == "if")
-                {
-                    outputs.Push(ParseIfThen(ref e));
-                } else
-                {
-
-                }
-            }
+            var ruleName = e.Current;
+            e.MoveNext(); //move past rule name
+            var ruleNode = ParseExpression(ref e);
+            ruleList.Add(ruleName, ruleNode);
             return ruleNode;
         }
         //expects enumerator pointing to token after if
@@ -191,38 +191,78 @@ namespace HexBDL
         {
             var ifNode = new ASTNode("if");
             var thenElseNode = new ASTNode("thenElse");
+            ifNode.left = ParseExpression(ref e , "then");
             ifNode.right = thenElseNode;
-            //basic parse conditions
-            //parse then
-            //parse else
-            while( e.MoveNext())
+            thenElseNode.left = ParseExpression(ref e, "else");
+            thenElseNode.right = ParseExpression(ref e, "endif");
+            return ifNode;
+        }
+        //this function needs a lot of work... needs to chain and call it self or something...
+        //parse this, then left, then right
+        //parse a, parse a->left by default
+        //if encounter or, return or, put a into or->left, find or->right = next
+        //TODO - support rule with no operators (and/or/+/- etc)
+        //returns with e pointing to next token
+        ASTNode ParseExpression(ref List<string>.Enumerator e, string endMarker="eol")
+        {
+            Stack<ASTNode> outputs = new Stack<ASTNode>();
+            Stack<ASTNode> ops = new Stack<ASTNode>();
+
+            ASTNode localRoot = null;
+            while( e.MoveNext() && e.Current != endMarker)
             {
-                Console.WriteLine(e.Current + ", ");
+                var token = e.Current;
+                Console.WriteLine(token + ", ");
                 continue;
+                var localNode = new ASTNode(token);
                 //ParseExpression(ref node, tokens, ref i);
-                if (node == null)
-                    node = new ASTNode("temp");
-                node.action = e.Current;
-                if (e.Current == "if")
+                if (token == "if")
                 {
                     e.MoveNext();
                     var subIfNode = ParseIfThen(ref e);
-                    //node.left = ParseCondition(tokens, ref i);
-                    //node.right = ParseThen(tokens, ref i);
                 } else 
-                if (e.Current == "then")
+                if (IsParen(token))
                 {
-                    var prev = node;
-                    node = new ASTNode("then");
-                    prev.right = node;
-                } else 
-                if (e.Current == "pay")
+                    e.MoveNext();
+                    localNode = ParseExpression(ref e, ")");
+                } else
+                if (opList.Contains(token)) //really, any operator
                 {
-
+                    localRoot = localNode;
+                } else
+                {
+                    if (verbList.Contains(token))
+                    {
+                        localNode = ParseVerb(ref e);
+                    }
+                    outputs.Push(localNode);
                 }
-                Console.WriteLine(e.Current);
+                //else if isOperand, parse operand...
+                Console.WriteLine(token);
+                if (localRoot == null)
+                    localRoot = localNode;
             }
-            return ifNode;
+            e.MoveNext();
+            //debug
+            Console.WriteLine("outputs: ");
+            foreach(var node in outputs) Console.Write(node.action+ ", ");
+            Console.WriteLine("\nops: ");
+            foreach(var node in ops) Console.Write(node.action+", ");
+            return localRoot;
+        }
+        ASTNode ParseVerb(ref List<string>.Enumerator e)
+        {
+            var verb = new ASTNode(e.Current);
+            e.MoveNext();
+            if (!Int32.TryParse(e.Current, out verb.quantity))
+            {
+                Console.WriteLine("invalid quantity in rule encountered while parsing verb: " + verb.action);
+                return null;
+            }
+            e.MoveNext();
+            //TODO check if extenuating type (any, of 1 kind)
+            verb.type = e.Current;
+            return verb;
         }
         Stack<List<string>> parenStack = new Stack<List<string>>();
         //
