@@ -8,27 +8,39 @@ def tokenize(rule):
     if (len(bigTokens) > 2):
         print "ERROR - more than 2 things from :"
     ruleName = bigTokens[0]
-    tokens = bigTokens[1].strip().split(' ')
+    tokens = bigTokens[1].strip().replace(',', "").split(' ')
     return ruleName, tokens
     
 def parse(rule):
     name, tokens = tokenize(rule)
+    print "parsing ", name
+    print tokens
     it = iter(tokens)
-    ast = None
-    if name == "item":
-        ast = parseItems(it)
-    else:
-        ast = parseExpression(it)
+    ast = parseExpression(it)
     return name, ast
     #return it
 
-def parseItems(it):
-    try:
-        while True:
-            token = it.next()
-            rule.items[token] = []
-    except StopIteration:
-        pass
+def parseItems(inputRule):
+    name, tokens = tokenize(inputRule)
+    it = iter(tokens)
+    ast = None
+    if name == "item":
+        try:
+            while True:
+                token = it.next()
+                rule.items[token] = []
+        except StopIteration:
+            pass
+    else:
+        l = []
+        try:
+            while True:
+                token = it.next()
+                l.append(token)
+        except StopIteration:
+            pass
+        rule.alias[name] = l
+
     return
 
 def parseIfThen(it):
@@ -76,6 +88,11 @@ def parseExpression(it, endMarker="eol"):
                     lastVerb.left = localNode
                 lastVerb = localNode
                 outputs.append(localNode)
+            elif token == "ask":
+                print "got an ask"
+                localNode = ASTNode(token)
+                localNode.left = parseExpression(it, "endask")
+                ops.append(localNode)
             else:
                 print "noun: ", token
                 outputs.append(ASTNode(token))
@@ -95,6 +112,8 @@ def parseExpression(it, endMarker="eol"):
     for o in ops:
         print o.action, ", "
 
+    #shunt-yard algorithm; 
+    # pop both queues, op.right = output, op.left = next op
     if len(ops) > 0:
         localRoot = ops[-1]
         prevNode = None
