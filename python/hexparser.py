@@ -59,7 +59,6 @@ def parseVerb(token, it):
     return node
 
 def parseExpression(it, endMarker="eol"):
-    print "Parsing expression: " 
     outputs = []
     ops = []
     localNode = None
@@ -70,31 +69,25 @@ def parseExpression(it, endMarker="eol"):
         token = it.next()
         while token != endMarker:
             if token == "if":
-                print "got an if"
                 localNode = parseIfThen(it)
                 ops.append(localNode)
             elif token == "(":
-                print "got a ("
                 localNode = parseExpression(it, ")")
                 outputs.append(localNode)
             elif rule.operators.__contains__(token):
-                print "operator ", token
                 localNode = ASTNode(token) 
                 ops.append(localNode)
             elif rule.verbs.__contains__(token):
-                print "verb: ", token
                 localNode = parseVerb(token, it)
                 if prevWasVerb == True:
                     lastVerb.left = localNode
                 lastVerb = localNode
                 outputs.append(localNode)
             elif token == "ask":
-                print "got an ask"
                 localNode = ASTNode(token)
                 localNode.left = parseExpression(it, "endask")
                 ops.append(localNode)
             else:
-                print "noun: ", token
                 outputs.append(ASTNode(token))
 
             prevWasVerb = rule.verbs.__contains__(token)
@@ -105,12 +98,6 @@ def parseExpression(it, endMarker="eol"):
             token = it.next()
     except StopIteration:
         pass
-    print "outputs collected: " 
-    for output in outputs:
-        print output.action, ", "
-    print "operations collected: " 
-    for o in ops:
-        print o.action, ", "
 
     #shunt-yard algorithm; 
     # pop both queues, op.right = output, op.left = next op
