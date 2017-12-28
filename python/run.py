@@ -25,17 +25,15 @@ def rexec(r, p):
     elif r.action == "or":
         #print list of options with numbers
         #recursively go left then right with number for each
-        num = [-1]
-        output = printOptions(r, num)
-        print output
-        inputNum = raw_input("Enter num:")
         num = [0]
-        runOption(r, p, inputNum, num)
-        #associate number with options to execute
-        if rexec(r.left, p) == False:
-            rexec(r.right, p)
-    #elif r.action == "then":
-    #elif r.action == "and":
+        l = []
+        output = printOptions(r, num, l)
+        print output
+        inputNum = int(raw_input("Enter num:"))-1
+        l[inputNum].printMe(0)
+        print ""
+        num = [0]
+        rexec(l[inputNum], p)
     else:
         rexec(r.left, p)
         rexec(r.right, p)
@@ -63,29 +61,34 @@ def runOption(r, p, runNum, num):
 # 2. c and 
 #   3. d
 #   4. e
-def printOptions(r, num, prevIsOr=True):
+#r=rule, num=depth, 
+#l=list of nodes corresponding to option number in ret
+def printOptions(r, num, l, prevIsOr=True):
     if r == None:
         return ""
     ret = ""
 
-    curIsOr = r.action == "or" and prevIsOr == True
+    #ONLY increment num if
+    #1. self is or
+    #2. children is NOT or
+    #3. parent is or
+    print num[0], r.getStr(), "prevIsOr ", prevIsOr
+    hasBeenOr = r.action == "or" and prevIsOr == True
+    if prevIsOr and r.action != "or":
+        num[0] += 1
+        ret += "\n" + str(num[1]) + ": "
+        print "+1 then self"
+        l.append(r)
+
     if operators.__contains__(r.action):
-        if curIsOr:
-            num[0] += 1
-            if num[0] > 0:
-                ret += str(num[0]) + ": "
+        ret += printOptions(r.left, num, l, hasBeenOr)
 
-        ret += printOptions(r.left, num, curIsOr)
-
-        if curIsOr:
-            num[0] += 1
-            ret += "\n" + str(num[0]) + ": "
-        else:
+        if r.action != "or":
             ret += " %s " % r.action
 
-        ret += printOptions(r.right, num, curIsOr)
+        ret += printOptions(r.right, num, l, hasBeenOr)
     else:
-        ret = r.getStr()
+        ret += r.getStr()
 
     return ret
 
@@ -121,7 +124,7 @@ def operate(p, n):
 
 if __name__ == '__main__':
     ruleBolster = 'bolster: if pay 2 coin blocked 2 slot then gain 1 resource or ( gain 1 resource and gain 1 heart ) endif'
-    ruleTest = 'test: if pay 2 coin blocked 2 slot then gain 1 resource or ( gain 1 resource and ( gain 1 heart or gain 2 powers ) ) or gain 4 resource endif'
+    ruleTest = 'test: if pay 2 coin blocked 2 slot then gain 4 resource or ( gain 1 resource and ( gain 1 heart or gain 1 power ) ) or gain 2 heart endif'
     ruleItems = 'item: coin, heart, oil, food, metal, wood'
     ruleResource = 'resource: oil, food, metal, wood'
     rulePlayerSetup = """Rusviet:
