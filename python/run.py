@@ -1,9 +1,9 @@
 from rule import *
-import parser
+import hexparser
 import yaml
 from player import *
 
-reload(parser)
+reload(hexparser)
 def execRule(ruleName, p):
     #walk down ast
     r = rules[ruleName]
@@ -25,7 +25,7 @@ def rexec(r, p):
     elif r.action == "or":
         #print list of options with numbers
         #recursively go left then right with number for each
-        num = [0]
+        num = [-1]
         output = printOptions(r, num)
         print output
         inputNum = raw_input("Enter num:")
@@ -64,32 +64,29 @@ def runOption(r, p, runNum, num):
 #   3. d
 #   4. e
 
-def printOptions(r, num, inc=True):
+def printOptions(r, num, prevIsOr=True):
     if r == None:
         return ""
     ret = ""
-    _inc = False
-    if inc == True:
-        if r.action == "or":
-            inc = False
-            _inc = True
 
-    if r.action == "or":
-        if _inc == True:
+    curIsOr = r.action == "or"
+    if operators.__contains__(r.action):
+        if prevIsOr == True and curIsOr:
             num[0] += 1
-            ret += str(num[0]) + ": "
-        ret += printOptions(r.left, num, inc)
-        if _inc == True:
+            if num[0] > 0:
+                ret += str(num[0]) + ": "
+
+        ret += printOptions(r.left, num, curIsOr)
+
+        if prevIsOr == True and curIsOr:
             num[0] += 1
-            ret += "\n" + str(num[0]) + ": "
+            secondNum = num[0]
+            ret += "\n" + str(secondNum) + ": "
         else:
-            ret += " or "
-        ret += printOptions(r.right, num, inc)
-    elif r.action == "and":
-        ret += printOptions(r.left, num, inc)
-        ret += " and "
-        ret += printOptions(r.right, num, inc)
-    elif not operators.__contains__(r.action):
+            ret += " %s " % r.action
+
+        ret += printOptions(r.right, num, curIsOr)
+    else:
         ret = r.getStr()
 
     return ret
@@ -126,7 +123,7 @@ def operate(p, n):
 
 if __name__ == '__main__':
     ruleBolster = 'bolster: if pay 2 coin blocked 2 slot then gain 1 resource or ( gain 1 resource and gain 1 heart ) endif'
-    ruleTest = 'test: if pay 2 coin blocked 2 slot then gain 1 resource or ( gain 1 resource and ( gain 1 heart or gain 2 powers ) ) endif'
+    ruleTest = 'test: if pay 2 coin blocked 2 slot then gain 1 resource or ( gain 1 resource and ( gain 1 heart or gain 2 powers ) ) or gain 4 resource endif'
     ruleItems = 'item: coin, heart, oil, food, metal, wood'
     ruleResource = 'resource: oil, food, metal, wood'
     rulePlayerSetup = """Rusviet:
@@ -145,14 +142,14 @@ if __name__ == '__main__':
         move: gain 1 move
         """
     #items
-    ruleName = parser.parseItems(ruleItems)
-    parser.parseItems(ruleResource)
+    ruleName = hexparser.parseItems(ruleItems)
+    hexparser.parseItems(ruleResource)
     #rules
-    ruleName, ast = parser.parse(ruleBolster)
+    ruleName, ast = hexparser.parse(ruleBolster)
     rules[ruleName] = ast
     ast.printMe(0)
-    ruleName, ast = parser.parse(ruleTest)
+    ruleName, ast = hexparser.parse(ruleTest)
     rules[ruleName] = ast
     #players
     player1 = yaml.load(rulePlayerSetup)['Rusviet']
-    #execRule('bolster', player1)
+    execRule('test', player1)
