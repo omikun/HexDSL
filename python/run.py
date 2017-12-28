@@ -63,25 +63,23 @@ def runOption(r, p, runNum, num):
 # 2. c and 
 #   3. d
 #   4. e
-
 def printOptions(r, num, prevIsOr=True):
     if r == None:
         return ""
     ret = ""
 
-    curIsOr = r.action == "or"
+    curIsOr = r.action == "or" and prevIsOr == True
     if operators.__contains__(r.action):
-        if prevIsOr == True and curIsOr:
+        if curIsOr:
             num[0] += 1
             if num[0] > 0:
                 ret += str(num[0]) + ": "
 
         ret += printOptions(r.left, num, curIsOr)
 
-        if prevIsOr == True and curIsOr:
+        if curIsOr:
             num[0] += 1
-            secondNum = num[0]
-            ret += "\n" + str(secondNum) + ": "
+            ret += "\n" + str(num[0]) + ": "
         else:
             ret += " %s " % r.action
 
