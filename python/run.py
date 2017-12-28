@@ -14,7 +14,7 @@ def execRule(ruleName, p):
 
 def rexec(r, p):
     if r == None:
-        return False
+        return
     if r.action == "if":
         cond = rexec(r.left, p)
         if cond == True:
@@ -23,13 +23,13 @@ def rexec(r, p):
         cond = operate(p, r)
         return cond
     elif r.action == "or":
-        #print list of options with numbers
-        #recursively go left then right with number for each
-        num = [0]
-        l = []
+        num = [0] #numbering
+        l = [] #options
         output = printOptions(r, num, l)
         print output
         inputNum = int(raw_input("Enter num:"))-1
+
+        print "Executing sub expression: ",
         l[inputNum].printMe(0)
         print ""
         num = [0]
@@ -37,16 +37,6 @@ def rexec(r, p):
     else:
         rexec(r.left, p)
         rexec(r.right, p)
-
-def runOption(r, p, runNum, num):
-    if r == None:
-        return
-    num[0] = num[0] +1
-    if runNum == num[0]:
-        rexec(r, p)
-        return
-    runOption(r.left, p, runNum, num)
-    runOption(r.right, p, runNum, num)
 
 # a or b and c
 # 1. a
@@ -68,16 +58,13 @@ def printOptions(r, num, l, prevIsOr=True):
         return ""
     ret = ""
 
-    #ONLY increment num if
-    #1. self is or
-    #2. children is NOT or
-    #3. parent is or
-    print num[0], r.getStr(), "prevIsOr ", prevIsOr
+    #increment num ONLY if
+    #1. all parents have been 'or'
+    #2. self is NOT or
     hasBeenOr = r.action == "or" and prevIsOr == True
     if prevIsOr and r.action != "or":
         num[0] += 1
-        ret += "\n" + str(num[1]) + ": "
-        print "+1 then self"
+        ret += "\n" + str(num[0]) + ": "
         l.append(r)
 
     if operators.__contains__(r.action):
@@ -96,7 +83,7 @@ def printOptions(r, num, l, prevIsOr=True):
 #check if player has right kind, if not, check alias and ask user for kind
 def operate(p, n):
     kind = n.kind
-    print n.action, n.amount, n.kind
+    #print "Executing: ", n.action, n.amount, n.kind
     while not p.__contains__(kind):
         if alias.__contains__(kind):
             print alias[n.kind]
