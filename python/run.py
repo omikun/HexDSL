@@ -62,7 +62,8 @@ def printOptions(r, num, l, prevIsOr=True):
     #1. all parents have been 'or'
     #2. self is NOT or
     hasBeenOr = r.action == "or" and prevIsOr == True
-    if prevIsOr and r.action != "or":
+    inc = prevIsOr and r.action != "or"
+    if inc:
         num[0] += 1
         ret += "\n" + str(num[0]) + ": "
         l.append(r)
@@ -70,7 +71,7 @@ def printOptions(r, num, l, prevIsOr=True):
     if operators.__contains__(r.action):
         ret += printOptions(r.left, num, l, hasBeenOr)
 
-        if r.action != "or":
+        if inc or not prevIsOr:
             ret += " %s " % r.action
 
         ret += printOptions(r.right, num, l, hasBeenOr)
@@ -128,6 +129,23 @@ if __name__ == '__main__':
             - 1 more move
             - no workerscare
         move: gain 1 move
+        """
+    playerMat1 = """
+        trade: 
+            if pay 1 coin then 
+                ( gain 2 resource or 1 heart blocked 1 slot ) and gain 0 power blocked 1 slot 
+            endif 
+        upgrade:
+            if pay 3 oil blockable 1 slot then 
+                gain 1 upgrade and ( you and nearby ) gain 0 power blocked 1 powerRecruit   
+            endif
+        bolster: if pay 2 coin then ( gain 2 power blocked 1 slot or gain 1 combatCard blocked 1 slot ) and gain 1 heart endif
+        use: move 2 units max 1 tile or gain 1 coin blocked 1 slot endif
+        produce: if pay 0 coin blocked 3 slot then gain 2 workerProducedResource blocked 1 slot endif
+        col1: trade, upgrade
+        col2: bolster, deploy
+        col3: use, build
+        col4: produce, enlist
         """
     #items
     ruleName = hexparser.parseItems(ruleItems)
