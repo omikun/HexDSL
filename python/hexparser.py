@@ -4,6 +4,7 @@ from rule import ASTNode
 'Board Game Description Language'
 
 def tokenize(rule):
+    "takes rule string and convert to list of tokens"
     bigTokens = rule.split(':')
     if (len(bigTokens) > 2):
         print "ERROR - more than 2 things from :"
@@ -12,6 +13,7 @@ def tokenize(rule):
     return ruleName, tokens
     
 def parse(rule):
+    "tokenize, then parseExpression"
     name, tokens = tokenize(rule)
     print "parsing ", name
     print tokens
@@ -21,6 +23,7 @@ def parse(rule):
     #return it
 
 def parseItems(inputRule):
+    "for parsing items and aliases only"
     name, tokens = tokenize(inputRule)
     it = iter(tokens)
     ast = None
@@ -31,7 +34,7 @@ def parseItems(inputRule):
                 rule.items[token] = []
         except StopIteration:
             pass
-    else:
+    else: #alias
         l = []
         try:
             while True:
@@ -44,6 +47,11 @@ def parseItems(inputRule):
     return
 
 def parseIfThen(it):
+    #if ->L condition
+    #   ->R then    ->L execute if condition == True
+    #               ->R None
+    #TODO need to be able to differentiate between if then and if then else, 
+    #otherwise just stick with if then
     ifNode = ASTNode("if")
     thenNode = ASTNode("then")
     ifNode.left = parseExpression(it, "then")
@@ -53,12 +61,18 @@ def parseIfThen(it):
     return ifNode
 
 def parseVerb(token, it):
+    #verbs are always defined as verb amount kind; eg. pay 2 coin
     node = ASTNode(token)
     node.amount = int(it.next())
     node.kind = it.next()
     return node
 
 def parseExpression(it, endMarker="eol"):
+    "recursive parser, returns when endMarker is encountered"
+    #expressions operator expressions
+    #if ... then ... endif
+    #verb number kind
+    
     outputs = []
     ops = []
     localNode = None
@@ -83,7 +97,7 @@ def parseExpression(it, endMarker="eol"):
                     lastVerb.left = localNode
                 lastVerb = localNode
                 outputs.append(localNode)
-            elif token == "ask":
+            elif token == "ask": #TODO maybe don't need this?
                 localNode = ASTNode(token)
                 localNode.left = parseExpression(it, "endask")
                 ops.append(localNode)
@@ -99,7 +113,7 @@ def parseExpression(it, endMarker="eol"):
     except StopIteration:
         pass
 
-    #shunt-yard algorithm; 
+    #shunt-yard algorithm, check wiki; 
     # pop both queues, op.right = output, op.left = next op
     if len(ops) > 0:
         localRoot = ops[-1]
@@ -114,8 +128,6 @@ def parseExpression(it, endMarker="eol"):
     
         if len(outputs) > 0:
             prevNode.left = outputs.pop()
-
-
     return localRoot
 
 if __name__ == '__main__':
