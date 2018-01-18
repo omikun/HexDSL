@@ -1,4 +1,5 @@
-"handles player mat setup"
+"Handles additional format stripping than normal rule parsing"
+#enables prettier formatting of rules, makes them more readable
 
 from rule import *
 import hexparser

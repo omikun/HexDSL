@@ -1,9 +1,18 @@
+#this script demonstrates proof of concept functionalities:
+# - contains rules and setup info
+# - calls to hexparser to build abstract syntax trees (AST)
+# - puts ASTs into rules list
+# - initializes player stats
+# - executes rules for given player
+
 from rule import *
 import hexparser
 import yaml
 from player import *
 
 reload(hexparser)
+
+#grabs rule from rule list and executes
 def execRule(ruleName, p):
     #walk down ast
     r = rules[ruleName]
@@ -12,6 +21,13 @@ def execRule(ruleName, p):
     else:
         print "Executed rule ", ruleName
 
+#recursive execution over AST
+#when a choice is encountered, present choices to player and ask for input
+#AST has 2 points: left, right; always execute left then right
+#1/18/18: currently only supports if A then B; no else or finally
+#   if you need else/finally, wrap it up with an or/and and ()
+#   ex. instead of: if a then b else c finally d
+#          do this: (if a then b) and (if not a then c) and d
 def rexec(r, p):
     if r == None:
         return
@@ -34,25 +50,30 @@ def rexec(r, p):
         print ""
         num = [0]
         rexec(l[inputNum], p)
-    else:
+    else: # if r.action == "and":
         rexec(r.left, p)
         rexec(r.right, p)
 
-# a or b and c
-# 1. a
-# 2. b and c
+
+#takes AST subtree and presents incremental option to player
+#r=rule, num=depth, 
+#l=list of nodes corresponding to option number in ret
+# say the input text is this:
 # (a and b ) or (c and d or e)
+# then the resulting AST is this: ->L is left link, ->R is right link,
+# head is at the far left (or in this case)
 # or ->L and ->L a
 #            ->R b
 #    ->R and ->L c
 #            ->R or ->L d
 #                   ->R e
+# and printOption will print this:
 # 1. a and b
-# 2. c and 
-#   3. d
-#   4. e
-#r=rule, num=depth, 
-#l=list of nodes corresponding to option number in ret
+# 2. c and d or e
+# if player chooses 2, it will execute c and print
+# 1. d
+# 2. e
+# repeat
 def printOptions(r, num, l, prevIsOr=True):
     if r == None:
         return ""
@@ -102,8 +123,9 @@ def operate(p, n):
 #main idea: simulate a turn based game
 #   
 #setup board game rules,
-#   items: list of known items ()
+#   items: list of known items (kind)
 #   aliases: (resource = wood, food, etc)
+#   board: init board
 #   players: init resources; player specific tweaks to rules
 #setup player setup rules
 #roundrobin execute player/rules, 
@@ -115,6 +137,7 @@ if __name__ == '__main__':
     ruleTest = 'test: if pay 2 coin blocked 2 slot then gain 4 resource or ( gain 1 resource and ( gain 1 heart or gain 1 power ) ) or gain 2 heart endif'
     ruleItems = 'item: coin, heart, oil, food, metal, wood'
     ruleResource = 'resource: oil, food, metal, wood'
+    #player is a json string
     rulePlayerSetup = """Rusviet:
         heart: 2
         coin: 3
