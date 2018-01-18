@@ -29,6 +29,7 @@ class ASTNode(object):
         return "%s %s %s" % (self.action , str(self.amount) , self.kind)
         
     def printMe(self, depth):
+        "print sub tree with self as root"
         if self == None:
             return
         print self.getStr(),
