@@ -1,9 +1,18 @@
+#this script demonstrates proof of concept functionalities:
+# - contains rules and setup info
+# - calls to hexparser to build abstract syntax trees (AST)
+# - puts ASTs into rules list
+# - initializes player stats
+# - executes rules for given player
+
 from rule import *
 import hexparser
 import yaml
 from player import *
 
 reload(hexparser)
+
+#grabs rule from rule list and executes
 def execRule(ruleName, p):
     #walk down ast
     r = rules[ruleName]
@@ -12,6 +21,8 @@ def execRule(ruleName, p):
     else:
         print "Executed rule ", ruleName
 
+#recursive execution over AST
+#when a choice is encountered, present choices to player and ask for input
 def rexec(r, p):
     if r == None:
         return
@@ -53,6 +64,8 @@ def rexec(r, p):
 #   4. e
 #r=rule, num=depth, 
 #l=list of nodes corresponding to option number in ret
+
+#takes AST subtree and presents incremental option to player
 def printOptions(r, num, l, prevIsOr=True):
     if r == None:
         return ""
@@ -102,8 +115,9 @@ def operate(p, n):
 #main idea: simulate a turn based game
 #   
 #setup board game rules,
-#   items: list of known items ()
+#   items: list of known items (kind)
 #   aliases: (resource = wood, food, etc)
+#   board: init board
 #   players: init resources; player specific tweaks to rules
 #setup player setup rules
 #roundrobin execute player/rules, 
@@ -115,6 +129,7 @@ if __name__ == '__main__':
     ruleTest = 'test: if pay 2 coin blocked 2 slot then gain 4 resource or ( gain 1 resource and ( gain 1 heart or gain 1 power ) ) or gain 2 heart endif'
     ruleItems = 'item: coin, heart, oil, food, metal, wood'
     ruleResource = 'resource: oil, food, metal, wood'
+    #player is a json string
     rulePlayerSetup = """Rusviet:
         heart: 2
         coin: 3
