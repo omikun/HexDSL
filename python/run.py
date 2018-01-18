@@ -23,6 +23,11 @@ def execRule(ruleName, p):
 
 #recursive execution over AST
 #when a choice is encountered, present choices to player and ask for input
+#AST has 2 points: left, right; always execute left then right
+#1/18/18: currently only supports if A then B; no else or finally
+#   if you need else/finally, wrap it up with an or/and and ()
+#   ex. instead of: if a then b else c finally d
+#          do this: (if a then b) and (if not a then c) and d
 def rexec(r, p):
     if r == None:
         return
@@ -45,27 +50,30 @@ def rexec(r, p):
         print ""
         num = [0]
         rexec(l[inputNum], p)
-    else:
+    else: # if r.action == "and":
         rexec(r.left, p)
         rexec(r.right, p)
 
-# a or b and c
-# 1. a
-# 2. b and c
+
+#takes AST subtree and presents incremental option to player
+#r=rule, num=depth, 
+#l=list of nodes corresponding to option number in ret
+# say the input text is this:
 # (a and b ) or (c and d or e)
+# then the resulting AST is this: ->L is left link, ->R is right link,
+# head is at the far left (or in this case)
 # or ->L and ->L a
 #            ->R b
 #    ->R and ->L c
 #            ->R or ->L d
 #                   ->R e
+# and printOption will print this:
 # 1. a and b
-# 2. c and 
-#   3. d
-#   4. e
-#r=rule, num=depth, 
-#l=list of nodes corresponding to option number in ret
-
-#takes AST subtree and presents incremental option to player
+# 2. c and d or e
+# if player chooses 2, it will execute c and print
+# 1. d
+# 2. e
+# repeat
 def printOptions(r, num, l, prevIsOr=True):
     if r == None:
         return ""
