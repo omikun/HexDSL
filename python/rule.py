@@ -1,10 +1,18 @@
+#defines Abstract Syntax Tree class, data structure to represent rules
+
+#global arrays to be used by game
 rules = {}
 items = {}
 alias = {}
+
+#helper function
 def printAST(name):
     rules[name].printMe(0)
     return
 
+#operators are separate from verbs
+#operators affect AST
+#verbs are all the same, but have different impact when executed
 operators = ["+", "-", "and", "or"]
 verbs = ["pay", "gain", "blocked"]
 class ASTNode(object):
