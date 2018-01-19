@@ -160,8 +160,11 @@ if __name__ == '__main__':
             endif 
         upgrade:
             if pay 3 oil blockable 1 slot then 
-                gain 1 upgrade and ( you and nearby ) gain 0 power blocked 1 powerRecruit   
+                upgrade_ and ( you and nearby ) gain 0 power blocked 1 powerRecruit   
             endif
+        upgrade_:
+            from topRow: subtract 1 blockable and gain 1 kind 
+            from botRow: subtract 1 blockable and subtract 1 action 
         bolster: if pay 2 coin then ( gain 2 power blocked 1 slot or gain 1 combatCard blocked 1 slot ) and gain 1 heart endif
         use: move 2 units max 1 tile or gain 1 coin blocked 1 slot endif
         produce: if pay 0 coin blocked 3 slot then gain 2 workerProducedResource blocked 1 slot endif
@@ -169,6 +172,8 @@ if __name__ == '__main__':
         col2: bolster, deploy
         col3: use, build
         col4: produce, enlist
+        topRow: trade, bolster, use, produce
+        botRow: upgrade, deploy, build, enlist
         """
     #items
     ruleName = hexparser.parseItems(ruleItems)
