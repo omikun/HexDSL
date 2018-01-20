@@ -26,13 +26,14 @@ playerMat1 = """
         col4: produce and enlist
         """
 
-def parsePlayerMat(mat):
+def parsePlayerMat(mat, p):
+    'takes string input, formats it, then insert rules to player'
     #compact all lines tabs to first line w/o tabs
     pmRules = formatMat(mat)
     print pmRules
     for rule in pmRules:
         ruleName, ast = hexparser.parse(rule)
-        rules[ruleName] = ast
+        p[ruleName] = ast
 
 def formatMat(mat):
     #strip new lines and extra spaces from input player mat

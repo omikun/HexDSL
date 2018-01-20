@@ -153,25 +153,61 @@ if __name__ == '__main__':
             - no workerscare
         move: gain 1 move
         """
+    #verbs operating on verbs
+    metaVerb = '''
+        block:
+            if blockable then 
+                remove 1 slot and remove 1 kind in parentNode
+            endif
+        unblock:
+            if blocked then 
+                remove 1 slot and add 1 kind in parentNode
+            endif
+        '''
+    #executes when corresponding rule is executed, modifies player state conditioned on rule executed and player states
+    metaRule = """
+        if upgrade then
+            player gain player.upgrade.recruit.kind
+            adjacent.player gain adjacent.player.upgrade.recruit
+        endif
+    """
+    #rules specific to a particular player (assigned on setup, can be randomized and/or player choose)
     playerMat1 = """
         trade: 
             if pay 1 coin then 
                 ( gain 2 resource or 1 heart blocked 1 slot ) and gain 0 power blocked 1 slot 
             endif 
+        bolster: 
+            if pay 2 coin then 
+                ( gain 2 power blocked 1 slot or gain 1 combatCard blocked 1 slot ) and gain 1 heart 
+            endif
+        use: move 2 units max 1 tile or gain 1 coin blocked 1 slot endif
+        produce: 
+            if pay 4 coin blocked 3 slot then 
+                gain 2 worker.position.tile.resource blocked 1 slot 
+            endif
         upgrade:
             if pay 3 oil blockable 1 slot then 
-                upgrade_ and ( you and nearby ) gain 0 power blocked 1 powerRecruit   
+                block 1 topRow and unblock 1 botRow 
             endif
-        upgrade_:
-            from topRow: subtract 1 blockable and gain 1 kind 
-            from botRow: subtract 1 blockable and subtract 1 action 
-        bolster: if pay 2 coin then ( gain 2 power blocked 1 slot or gain 1 combatCard blocked 1 slot ) and gain 1 heart endif
-        use: move 2 units max 1 tile or gain 1 coin blocked 1 slot endif
-        produce: if pay 0 coin blocked 3 slot then gain 2 workerProducedResource blocked 1 slot endif
+        deploy:
+            if pay 2 wood blockable 1 slot then
+                spawn 1 mech at worker.position
+            endif
+        build:
+            if pay 3 iron blockable 1 slot then
+                spawn 1 building at worker.position
+            endif
+        enlist:
+            if pay 3 food blockable 2 slot then
+                oncePerGame gain 1 power and gain 1 recruit.power
+                oncePerGame gain 1 power and gain 1 recruit.power
+            endif
         col1: trade, upgrade
         col2: bolster, deploy
         col3: use, build
         col4: produce, enlist
+        action: col1, col2, col3, col4
         topRow: trade, bolster, use, produce
         botRow: upgrade, deploy, build, enlist
         """
