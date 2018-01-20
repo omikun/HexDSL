@@ -13,9 +13,8 @@ from player import *
 reload(hexparser)
 
 #grabs rule from rule list and executes
-def execRule(ruleName, p):
+def execRule(r, p):
     #walk down ast
-    r = rules[ruleName]
     if rexec(r, p) == False:
         print "Could not execute rule"
     else:
@@ -104,10 +103,11 @@ def printOptions(r, num, l, prevIsOr=True):
 
 #check if player has right kind, if not, check alias and ask user for kind
 def operate(p, n):
+    'modify a player resource, player[n.kind]'
     kind = n.kind
     #print "Executing: ", n.action, n.amount, n.kind
     while not p.__contains__(kind):
-        if alias.__contains__(kind):
+        if alias.__contains__(n.kind):
             print alias[n.kind]
         kind = raw_input("Enter "+ n.kind+": ")
 
@@ -118,7 +118,35 @@ def operate(p, n):
         p[kind] = newAmount
     elif n.action == "gain":
         p[kind] = p[kind] + n.amount
+    elif n.action == "block":
+        #find all blockable nodes in given rule
+        choices = p[kind].getNodes("blockable")
+        sel = ''
+        s = None
+        while not is_int(sel) or in_range(choices, int(sel)):
+            for i, c in enumerate(choices):
+                print i, 
+                c.printMe()
+                print ''
+            sel = raw_input("Enter number: ")
+            s = choices[int(sel)]
+        #int(sel) is the user choice for which parent of a blockable gets to be blocked
+        #choices[int(sel)]
+        #s is the node with an attached blockable
+        if s.left.amount > 0 and s.amount > 0:
+            s.amount -= 1
+            s.left.amount -= 1
+
     return True
+
+def is_int(s):
+    try:
+        int(s)
+        return True
+    catch ValueError:
+        return False
+def in_range(l, n):
+    return 0 <= n < len(l)
 
 #main idea: simulate a turn based game
 #   
@@ -222,4 +250,7 @@ if __name__ == '__main__':
     rules[ruleName] = ast
     #players
     player1 = yaml.load(rulePlayerSetup)['Rusviet']
-    execRule('test', player1)
+
+    r = rules['test'] #global rules
+    #r = player1['trade'] #per player rule
+    execRule(r, player1)
