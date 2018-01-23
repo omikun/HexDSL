@@ -9,7 +9,7 @@ from rule import *
 import hexparser
 import yaml
 from player import *
-
+from playerMat import *
 reload(hexparser)
 
 #grabs rule from rule list and executes
@@ -119,8 +119,9 @@ def operate(p, n):
     elif n.action == "gain":
         p[kind] = p[kind] + n.amount
     elif n.action == "block":
+        #remove 1 unit from a verb with attached blockable
         #find all blockable nodes in given rule
-        choices = p[kind].getNodes("blockable")
+        choices = p[kind].getNodesWithChild("blockable")
         sel = ''
         s = None
         while not is_int(sel) or in_range(choices, int(sel)):
@@ -136,6 +137,10 @@ def operate(p, n):
         if s.left.amount > 0 and s.amount > 0:
             s.amount -= 1
             s.left.amount -= 1
+    elif n.action == "unblock":
+        print "TODO: implement unblock"
+    else:
+        print 'Unrecognized verb'
 
     return True
 
@@ -143,7 +148,7 @@ def is_int(s):
     try:
         int(s)
         return True
-    catch ValueError:
+    except ValueError:
         return False
 def in_range(l, n):
     return 0 <= n < len(l)
@@ -231,6 +236,8 @@ if __name__ == '__main__':
                 oncePerGame gain 1 power and gain 1 recruit.power
                 oncePerGame gain 1 power and gain 1 recruit.power
             endif
+        """
+    actionAliases = """
         col1: trade, upgrade
         col2: bolster, deploy
         col3: use, build
@@ -253,4 +260,13 @@ if __name__ == '__main__':
 
     r = rules['test'] #global rules
     #r = player1['trade'] #per player rule
-    execRule(r, player1)
+    #execRule(r, player1)
+
+    aliases = formatMat(actionAliases)
+    for a in aliases:
+        print 'adding ', a
+        hexparser.parseItems(a)
+    #parsePlayerMat(playerMat1, player1)
+    #r = player1['upgrade'] #global rules
+    #execRule(r, player1)
+

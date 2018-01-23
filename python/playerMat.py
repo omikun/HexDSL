@@ -49,3 +49,7 @@ def formatMat(mat):
 def hasChar(s, c):
     return s.find(c) >= 0
 print "hello"
+
+if __name__ == '__main__':
+    player = {}
+    parsePlayerMat(playerMat1, player)
