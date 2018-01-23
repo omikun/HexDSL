@@ -1,5 +1,5 @@
 #! /home/apps/python_org/2.7.6/bin/python
-import rule
+from rule import *
 from rule import ASTNode
 'Board Game Description Language'
 
@@ -31,7 +31,7 @@ def parseItems(inputRule):
         try:
             while True:
                 token = it.next()
-                rule.items[token] = []
+                items[token] = []
         except StopIteration:
             pass
     else: #alias
@@ -42,7 +42,8 @@ def parseItems(inputRule):
                 l.append(token)
         except StopIteration:
             pass
-        rule.alias[name] = l
+        print 'parsed item: ', name, l
+        alias[name] = l
 
     return
 
@@ -88,10 +89,10 @@ def parseExpression(it, endMarker="eol"):
             elif token == "(":
                 localNode = parseExpression(it, ")")
                 outputs.append(localNode)
-            elif rule.operators.__contains__(token):
+            elif operators.__contains__(token):
                 localNode = ASTNode(token) 
                 ops.append(localNode)
-            elif rule.verbs.__contains__(token):
+            elif verbs.__contains__(token):
                 localNode = parseVerb(token, it)
                 if prevWasVerb == True:
                     lastVerb.left = localNode
@@ -102,9 +103,10 @@ def parseExpression(it, endMarker="eol"):
                 localNode.left = parseExpression(it, "endask")
                 ops.append(localNode)
             else:
+                print 'parsed  other: ', token
                 outputs.append(ASTNode(token))
 
-            prevWasVerb = rule.verbs.__contains__(token)
+            prevWasVerb = verbs.__contains__(token)
 
             if localRoot == None:
                 localRoot = localNode
@@ -134,5 +136,9 @@ if __name__ == '__main__':
     #TODO get rid of endif unless there's nested ifs
     ruleBolster = 'bolster: if pay 2 coin blocked 2 slot then gain 1 resource and ( gain 1 resource or gain 1 heart ) endif'
     ruleName, ast = parse(ruleBolster)
-    rule.rules[ruleName] = ast
+    rules[ruleName] = ast
     ast.printMe(0)
+    upgrade = 'upgrade: if pay 3 oil blockable 1 slot then block 1 topRow and unblock 1 botRow endif'
+    ruleName, ast = parse(upgrade)
+    rules[ruleName] = ast
+    ast.printMe()

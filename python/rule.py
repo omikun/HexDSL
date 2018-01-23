@@ -14,7 +14,7 @@ def printAST(name):
 #operators affect AST
 #verbs are all the same, but have different impact when executed
 operators = ["+", "-", "and", "or"]
-verbs = ["pay", "gain", "blocked"]
+verbs = ["pay", "gain", "blocked", "blockable", "block", "unblock", "spawn"]
 class ASTNode(object):
     def __init__(self, name):
         self.action = name
