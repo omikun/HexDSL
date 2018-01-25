@@ -34,7 +34,35 @@ def rexec(r, p):
         cond = rexec(r.left, p)
         if cond == True:
             rexec(r.right, p)
-    elif verbs.__contains__(r.action):
+    elif '.' in r.action:
+        if t is None:
+            raise ValueError("oh crap this isn't suppose to happen! t should be something!")
+        tokens = filter(lambda x: x is not 'amount', r.action.split('.')) 
+        #tokens = [token for token in tokens if token is not 'amount']
+        #algorithm: in t['targetRule'], get list of all nodes that fits this set of token specifications
+        #ex. verb.blocked.amount -> look for a verb->blocked pattern
+        qualifyingNodes = []
+        prevToken = ''
+        root = t['targetRule']
+        def getNodeList(cur, tokens_, t):
+            if len(tokens_) == 0:
+                return True
+            if cur is None:
+                return []
+            newTokens = tokens_
+            if cur.action is tokens_[0]:
+                partialMatch = True
+                newTokens = tokens_[1:]
+            lret = getNodeList(cur.left, newTokens)
+            rret = getNodeList(cur.right, newTokens)
+            if partialMatch and (lret or rret):
+                t.set_default(cur.action, []).append(cur)
+
+        l = getNodeList(root, tokens, t)
+        print 'rexec ', r.action, 'qualifying nodes: '
+        for node in l:
+            node.printSelf()
+    elif r.action in p:
         cond = operate(p, r)
         return cond
     elif r.action == "or":
@@ -88,7 +116,7 @@ def printOptions(r, num, l, prevIsOr=True):
         ret += "\n" + str(num[0]) + ": "
         l.append(r)
 
-    if operators.__contains__(r.action):
+    if r.action in operators:
         ret += printOptions(r.left, num, l, hasBeenOr)
 
         if inc or not prevIsOr:
@@ -106,11 +134,13 @@ def operate(p, n):
     'modify a player resource, player[n.kind]'
     kind = n.kind
     #print "Executing: ", n.action, n.amount, n.kind
-    while not p.__contains__(kind):
-        if alias.__contains__(n.kind):
+    while kind not in p:
+        if n.kind in alias:
             print alias[n.kind]
         kind = raw_input("Enter "+ n.kind+": ")
-
+    #metaverb: block 1 trade
+    if isinstance(p[kind], ASTNode): #kind refers to a rule (of type ASTNode); it's a metaVerb!
+        rexec(p[n.action], p, {'targetNode': p[kind]}) #execute as a rule with a target dictionary
     if n.action == "pay":
         newAmount = p[kind] - n.amount
         if newAmount < 0:
