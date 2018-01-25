@@ -27,14 +27,18 @@ def execRule(r, p):
 #   if you need else/finally, wrap it up with an or/and and ()
 #   ex. instead of: if a then b else c finally d
 #          do this: (if a then b) and (if not a then c) and d
-def rexec(r, p):
+def rexec(r, p, t=None):
     if r == None:
         return
+    print '~rexec: ', r.printMe()
+
     if r.action == "if":
         cond = rexec(r.left, p)
+        print 'rexec if cond: ', cond
         if cond == True:
             rexec(r.right, p)
     elif '.' in r.action:
+        print 'rexec has a .'
         if t is None:
             raise ValueError("oh crap this isn't suppose to happen! t should be something!")
         tokens = filter(lambda x: x is not 'amount', r.action.split('.')) 
@@ -53,8 +57,8 @@ def rexec(r, p):
             if cur.action is tokens_[0]:
                 partialMatch = True
                 newTokens = tokens_[1:]
-            lret = getNodeList(cur.left, newTokens)
-            rret = getNodeList(cur.right, newTokens)
+            lret = getNodeList(cur.left, newTokens, t)
+            rret = getNodeList(cur.right, newTokens, t)
             if partialMatch and (lret or rret):
                 t.set_default(cur.action, []).append(cur)
 
@@ -62,10 +66,12 @@ def rexec(r, p):
         print 'rexec ', r.action, 'qualifying nodes: '
         for node in l:
             node.printSelf()
-    elif r.action in p:
+    elif r.action in p or r.action in verbs:
+        print 'rexec action in player rule'
         cond = operate(p, r)
         return cond
     elif r.action == "or":
+        print 'rexec or'
         num = [0] #numbering
         l = [] #options
         output = printOptions(r, num, l)
@@ -78,6 +84,7 @@ def rexec(r, p):
         num = [0]
         rexec(l[inputNum], p)
     else: # if r.action == "and":
+        print 'rexec else'
         rexec(r.left, p)
         rexec(r.right, p)
 
@@ -133,13 +140,16 @@ def printOptions(r, num, l, prevIsOr=True):
 def operate(p, n):
     'modify a player resource, player[n.kind]'
     kind = n.kind
+    print 'operating node: ', n.printMe()
     #print "Executing: ", n.action, n.amount, n.kind
     while kind not in p:
         if n.kind in alias:
             print alias[n.kind]
         kind = raw_input("Enter "+ n.kind+": ")
     #metaverb: block 1 trade
+    print 'you entered ', kind, ' is this a rule? ', isinstance(p[kind], ASTNode)
     if isinstance(p[kind], ASTNode): #kind refers to a rule (of type ASTNode); it's a metaVerb!
+        print 'metaverb found! ', n.action
         rexec(p[n.action], p, {'targetNode': p[kind]}) #execute as a rule with a target dictionary
     if n.action == "pay":
         newAmount = p[kind] - n.amount
@@ -206,7 +216,7 @@ if __name__ == '__main__':
         coin: 3
         power: 4 
         wood: 0
-        oil: 0
+        oil: 3000
         food: 0
         metal: 0
         mechs: 
@@ -237,8 +247,8 @@ if __name__ == '__main__':
     #rules specific to a particular player (assigned on setup, can be randomized and/or player choose)
     playerMat1 = """
         trade: 
-            if pay 1 coin then 
-                ( gain 2 resource or 1 heart blocked 1 slot ) and gain 0 power blocked 1 slot 
+            if pay 3 coin blockable 2 slot then 
+                ( gain 2 resource blocked 2 slot or 1 heart blocked 1 slot ) and gain 0 power blocked 1 slot 
             endif 
         bolster: 
             if pay 2 coin then 
@@ -248,6 +258,14 @@ if __name__ == '__main__':
         produce: 
             if pay 4 coin blocked 3 slot then 
                 gain 2 worker.position.tile.resource blocked 1 slot 
+            endif
+        block:
+            if verb.blockable.amount > 1 then 
+                subtract 1 verb.amount and subtract 1 verb.blockable.amount
+            endif
+        unblock:
+            if verb.blocked.amount > 1 then
+                add 1 verb.amount and subtract 1 verb.blockable.amount
             endif
         upgrade:
             if pay 3 oil blockable 1 slot then 
@@ -296,7 +314,7 @@ if __name__ == '__main__':
     for a in aliases:
         print 'adding ', a
         hexparser.parseItems(a)
-    #parsePlayerMat(playerMat1, player1)
-    #r = player1['upgrade'] #global rules
-    #execRule(r, player1)
+    parsePlayerMat(playerMat1, player1)
+    r = player1['upgrade'] #global rules
+    execRule(r, player1)
 

@@ -28,6 +28,7 @@ class ASTNode(object):
         if self == None:
             return False
         ret = []
+        lret, rret = None, None
         if self.action == a:
             return True
         if self.left:
