@@ -42,7 +42,6 @@ class ASTNode(object):
         if rret and rret != False:
             ret.append(rret)
         return ret
-
     def getNodes(self, a):
         'return list of nodes with action a, returns can nest'
         if self == None:

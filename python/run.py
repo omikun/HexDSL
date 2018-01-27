@@ -30,7 +30,7 @@ def getNodeList(cur, tokens_, t):
         return True
     if cur == None:
         return []
-    print cur.printSelf()
+    print 'getNodeList: ', cur
     newTokens = tokens_
     partialMatch = False
     if cur.action == tokens_[0] or cur.action in verbs:
@@ -40,7 +40,10 @@ def getNodeList(cur, tokens_, t):
     lret = getNodeList(cur.left, newTokens, t)
     rret = getNodeList(cur.right, newTokens, t)
     if partialMatch and (lret or rret):
-        t.setdefault(cur.action, []).append(cur)
+        t.setdefault(tokens_[0], []).append(cur)
+        print 'appending to t: ', tokens_[0], t
+        return True
+    return False
 #recursive execution over AST
 #when a choice is encountered, present choices to player and ask for input
 #AST has 2 points: left, right; always execute left then right
@@ -64,11 +67,9 @@ def rexec(r, p, t=None):
         print 'rexec has a .', t
         if t == None:
             raise ValueError("oh crap this isn't suppose to happen! t should be something!")
-        tokens = filter(lambda x: x != 'amount', r.action.split('.')) 
+        #tokens = filter(lambda x: x != 'amount', r.action.split('.')) 
+        tokens = r.action.split('.')
         print 'trying to match ', tokens
-        qualifyingNodes = []
-        prevToken = ''
-        print t
         root = t['targetNode']
         root.printMe()
         getNodeList(root, tokens, t)
@@ -78,14 +79,18 @@ def rexec(r, p, t=None):
         for k,v in t.items():
             print 'dict:', k,v
         ret = None
-        if len(t[tokens[-1]]) == 1:
-            ret = t[tokens[-1]][0]
+        key = tokens[-2] if tokens[-1] == 'amount' else tokens[-1]
+        print 'printing key, tokens: ', key, tokens
+        if len(t[key]) == 1:
+            ret = t[key][0]
         if 'amount' in r.action and ret:
             return ret.amount #last qualifier (ex. verb.blockable->blockable)
+        else:
+            print 'something wrong: ', r.action, ret
         
     elif r.action in p or r.action in verbs:
         print 'rexec action in player rule'
-        cond = operate(p, r)
+        cond = operate(p, r, t)
         return cond
     elif r.action == ">":
         print 'rexecing on >, passing t down'
@@ -160,13 +165,27 @@ def printOptions(r, num, l, prevIsOr=True):
 
     return ret
 
-
+def getRecursiveDictLookUp(d, tokens):
+    if tokens == []:
+        return None
+    if (len(tokens) <= 2 and tokens[-1] == 'amount') or len(tokens) == 1:
+        return d[tokens[0]].amount
+    return getRecursiveDictLookUp(d[tokens[0]], tokens[1:])
 #check if player has right kind, if not, check alias and ask user for kind
-def operate(p, n):
+def operate(p, n, t=None):
     'modify a player resource, player[n.kind]'
     kind = n.kind
     print 'operating node: ', n.printMe()
     #print "Executing: ", n.action, n.amount, n.kind
+    if '.' in n.kind:
+        #kind refers to a particular quantity variable, not p[kind]
+        #preferably could find value by getting recursive dict lookup
+        tokens = n.kind.split('.')
+        if n.action == 'add':
+            t[tokens[-2]][0].amount += n.amount
+        if n.action == 'subtract':
+            t[tokens[-2]][0].amount -= n.amount
+        return True
     while kind not in p:
         if n.kind in alias:
             print alias[n.kind]
@@ -285,16 +304,16 @@ if __name__ == '__main__':
                 gain 2 worker.position.tile.resource blocked 1 slot 
             endif
         block:
-            if verb.blockable.amount > 1 then 
+            if verb.blockable.amount > 0 then 
                 subtract 1 verb.amount and subtract 1 verb.blockable.amount
             endif
         unblock:
-            if verb.blocked.amount > 1 then
+            if verb.blocked.amount > 0 then
                 add 1 verb.amount and subtract 1 verb.blockable.amount
             endif
         upgrade:
             if pay 3 oil blockable 1 slot then 
-                block 1 topRow and unblock 1 botRow 
+                block 1 topRow
             endif
         deploy:
             if pay 2 wood blockable 1 slot then
@@ -343,3 +362,4 @@ if __name__ == '__main__':
     r = player1['upgrade'] #global rules
     player1['block'].printMe()
     execRule(r, player1)
+    player1['trade'].printMe()
