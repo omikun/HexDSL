@@ -1,75 +1,17 @@
-#this script demonstrates proof of concept functionalities:
-# - contains rules and setup info
-# - calls to hexparser to build abstract syntax trees (AST)
-# - puts ASTs into rules list
-# - initializes player stats
-# - executes rules for given player
-
-from rule import *
-import hexparser
-import yaml
-from player import *
-from playerMat import *
-reload(hexparser)
-
-#grabs rule from rule list and executes
-def execRule(r, p):
-    #walk down ast
-    if rexec(r, p) == False:
-        print "Could not execute rule"
-    else:
-        print "Executed rule ", ruleName
-
-#recursive execution over AST
-#when a choice is encountered, present choices to player and ask for input
-#AST has 2 points: left, right; always execute left then right
-#1/18/18: currently only supports if A then B; no else or finally
-#   if you need else/finally, wrap it up with an or/and and ()
-#   ex. instead of: if a then b else c finally d
-#          do this: (if a then b) and (if not a then c) and d
-def rexec(r, p, t=None):
-    if r == None:
-        return
-    print '~rexec: ', r.printMe()
-
-    if r.action == "if":
-        cond = rexec(r.left, p)
-        print 'rexec if cond: ', cond
-        if cond == True:
-            rexec(r.right, p)
-    elif '.' in r.action:
-        print 'rexec has a .'
-        if t is None:
-            raise ValueError("oh crap this isn't suppose to happen! t should be something!")
-        tokens = filter(lambda x: x is not 'amount', r.action.split('.')) 
-        #tokens = [token for token in tokens if token is not 'amount']
-        #algorithm: in t['targetRule'], get list of all nodes that fits this set of token specifications
-        #ex. verb.blocked.amount -> look for a verb->blocked pattern
-        qualifyingNodes = []
-        prevToken = ''
-        root = t['targetRule']
-        def getNodeList(cur, tokens_, t):
-            if len(tokens_) == 0:
-                return True
-            if cur is None:
-                return []
-            newTokens = tokens_
-            if cur.action is tokens_[0]:
-                partialMatch = True
-                newTokens = tokens_[1:]
-            lret = getNodeList(cur.left, newTokens, t)
-            rret = getNodeList(cur.right, newTokens, t)
-            if partialMatch and (lret or rret):
-                t.set_default(cur.action, []).append(cur)
-
-        l = getNodeList(root, tokens, t)
-        print 'rexec ', r.action, 'qualifying nodes: '
-        for node in l:
-            node.printSelf()
+last qualifier (ex. verb.blockable->blockable)
+        
     elif r.action in p or r.action in verbs:
         print 'rexec action in player rule'
         cond = operate(p, r)
         return cond
+    elif r.action == ">":
+        print 'rexecing on >, passing t down'
+        ret = rexec(r.left, p, t) > rexec(r.right, p, t)
+        print 'result of rexec >: ', ret
+        return ret
+    elif is_int(r.action):
+        print 'rexecing an int', r.action
+        return int(r.action)
     elif r.action == "or":
         print 'rexec or'
         num = [0] #numbering
@@ -82,11 +24,11 @@ def rexec(r, p, t=None):
         l[inputNum].printMe(0)
         print ""
         num = [0]
-        rexec(l[inputNum], p)
+        rexec(l[inputNum], p, t)
     else: # if r.action == "and":
         print 'rexec else'
-        rexec(r.left, p)
-        rexec(r.right, p)
+        rexec(r.left, p, t)
+        rexec(r.right, p, t)
 
 
 #takes AST subtree and presents incremental option to player
@@ -131,7 +73,7 @@ def printOptions(r, num, l, prevIsOr=True):
 
         ret += printOptions(r.right, num, l, hasBeenOr)
     else:
-        ret += r.getStr()
+        ret += r
 
     return ret
 
@@ -158,7 +100,7 @@ def operate(p, n):
         p[kind] = newAmount
     elif n.action == "gain":
         p[kind] = p[kind] + n.amount
-    elif n.action == "block":
+    elif n.action == "block" and False:
         #remove 1 unit from a verb with attached blockable
         #find all blockable nodes in given rule
         choices = p[kind].getNodesWithChild("blockable")
@@ -316,5 +258,5 @@ if __name__ == '__main__':
         hexparser.parseItems(a)
     parsePlayerMat(playerMat1, player1)
     r = player1['upgrade'] #global rules
+    player1['block'].printMe()
     execRule(r, player1)
-
