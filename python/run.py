@@ -1,4 +1,87 @@
-last qualifier (ex. verb.blockable->blockable)
+#this script demonstrates proof of concept functionalities:
+# - contains rules and setup info
+# - calls to hexparser to build abstract syntax trees (AST)
+# - puts ASTs into rules list
+# - initializes player stats
+# - executes rules for given player
+
+from rule import *
+import hexparser
+import yaml
+from player import *
+from playerMat import *
+reload(hexparser)
+
+#grabs rule from rule list and executes
+def execRule(r, p):
+    #walk down ast
+    if rexec(r, p) == False:
+        print "Could not execute rule"
+    else:
+        print "Executed rule ", ruleName
+
+#tokens = [token for token in tokens if token is not 'amount']
+#algorithm: in t['targetRule'], get list of all nodes that fits this set of token specifications
+#ex. verb.blocked.amount -> look for a verb->blocked pattern
+def getNodeList(cur, tokens_, t):
+    'find matching nodes in cur tree to token list, add matches to dict t'
+    if len(tokens_) == 0 or tokens_[0] == 'amount':
+        print 'match found!?!?!'
+        return True
+    if cur == None:
+        return []
+    print cur.printSelf()
+    newTokens = tokens_
+    partialMatch = False
+    if cur.action == tokens_[0] or cur.action in verbs:
+        partialMatch = True
+        newTokens = tokens_[1:]
+        print 'partial match found! ', cur.action, ' new tokens_: ', newTokens
+    lret = getNodeList(cur.left, newTokens, t)
+    rret = getNodeList(cur.right, newTokens, t)
+    if partialMatch and (lret or rret):
+        t.setdefault(cur.action, []).append(cur)
+#recursive execution over AST
+#when a choice is encountered, present choices to player and ask for input
+#AST has 2 points: left, right; always execute left then right
+#1/18/18: currently only supports if A then B; no else or finally
+#   if you need else/finally, wrap it up with an or/and and ()
+#   ex. instead of: if a then b else c finally d
+#          do this: (if a then b) and (if not a then c) and d
+def rexec(r, p, t=None):
+    if r == None:
+        return
+    print '~rexec: ', r.printMe()
+
+    if t:
+        print t
+    if r.action == "if":
+        cond = rexec(r.left, p, t)
+        print 'rexec if cond: ', cond
+        if cond == True:
+            rexec(r.right, p, t)
+    elif '.' in r.action:
+        print 'rexec has a .', t
+        if t == None:
+            raise ValueError("oh crap this isn't suppose to happen! t should be something!")
+        tokens = filter(lambda x: x != 'amount', r.action.split('.')) 
+        print 'trying to match ', tokens
+        qualifyingNodes = []
+        prevToken = ''
+        print t
+        root = t['targetNode']
+        root.printMe()
+        getNodeList(root, tokens, t)
+        #if t has many nodes, ask user to decide
+        #after choice made, go down and get amount if amount in action
+        print t
+        for k,v in t.items():
+            print 'dict:', k,v
+        ret = None
+        if len(t[tokens[-1]]) == 1:
+            ret = t[tokens[-1]][0]
+        if 'amount' in r.action and ret:
+            return ret.amount #last qualifier (ex. verb.blockable->blockable)
         
     elif r.action in p or r.action in verbs:
         print 'rexec action in player rule'
