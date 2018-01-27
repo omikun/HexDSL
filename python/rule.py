@@ -13,8 +13,8 @@ def printAST(name):
 #operators are separate from verbs
 #operators affect AST
 #verbs are all the same, but have different impact when executed
-operators = ["+", "-", "and", "or"]
-verbs = ["pay", "gain", "blocked", "blockable", "block", "unblock", "spawn"]
+operators = ["+", "-", "and", "or", ">", ">=", "<", "<="]
+verbs = ["pay", "gain", "add", "subtract", "block", "unblock", "spawn"]
 class ASTNode(object):
     def __init__(self, name):
         self.action = name
@@ -63,14 +63,14 @@ class ASTNode(object):
     def printSelf(self):
         print "node: ", self.action, self.amount, self.kind
 
-    def getStr(self):
+    def __repr__(self):
         return "%s %s %s" % (self.action , str(self.amount) , self.kind)
         
     def printMe(self, depth=0):
         "print sub tree with self as root"
         if self == None:
             return
-        print self.getStr(),
+        print self,
         if self.left != None:
             print "\t->L", depth, " ",
             self.left.printMe(depth+1)
