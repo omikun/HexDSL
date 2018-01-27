@@ -89,10 +89,11 @@ def parseExpression(it, endMarker="eol"):
             elif token == "(":
                 localNode = parseExpression(it, ")")
                 outputs.append(localNode)
-            elif operators.__contains__(token):
+            elif token in operators:
                 localNode = ASTNode(token) 
                 ops.append(localNode)
-            elif verbs.__contains__(token):
+            elif token in verbs or token == 'blockable' or token == 'blocked':
+                print 'parsed a verb or verbish ', token
                 localNode = parseVerb(token, it)
                 if prevWasVerb == True:
                     lastVerb.left = localNode
@@ -106,7 +107,7 @@ def parseExpression(it, endMarker="eol"):
                 print 'parsed  other: ', token
                 outputs.append(ASTNode(token))
 
-            prevWasVerb = verbs.__contains__(token)
+            prevWasVerb = token in verbs
 
             if localRoot == None:
                 localRoot = localNode
