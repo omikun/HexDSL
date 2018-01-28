@@ -19,6 +19,7 @@ def parse(rule):
     print tokens
     it = iter(tokens)
     ast = parseExpression(it)
+    ast.printMe()
     return name, ast
     #return it
 
@@ -87,18 +88,23 @@ def parseExpression(it, endMarker="eol"):
                 localNode = parseIfThen(it)
                 ops.append(localNode)
             elif token == "(":
+                print '('
                 localNode = parseExpression(it, ")")
+                print ')'
                 outputs.append(localNode)
             elif token in operators:
+                print token
                 localNode = ASTNode(token) 
                 ops.append(localNode)
             elif token in verbs or token == 'blockable' or token == 'blocked':
-                print 'parsed a verb or verbish ', token
+                #print 'parsed a verb or verbish ', token
                 localNode = parseVerb(token, it)
+                print localNode
                 if prevWasVerb == True:
                     lastVerb.left = localNode
+                else:
+                    outputs.append(localNode)
                 lastVerb = localNode
-                outputs.append(localNode)
             elif token == "ask": #TODO maybe don't need this?
                 localNode = ASTNode(token)
                 localNode.left = parseExpression(it, "endask")

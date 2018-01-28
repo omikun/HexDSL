@@ -4,13 +4,22 @@
 # - puts ASTs into rules list
 # - initializes player stats
 # - executes rules for given player
-
+import sys, os
 from rule import *
 import hexparser
 import yaml
 from player import *
 from playerMat import *
 reload(hexparser)
+
+#common
+# Disable
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
+
+# Restore
+def enablePrint():
+    sys.stdout = sys.__stdout__
 
 #grabs rule from rule list and executes
 def execRule(r, p):
@@ -23,27 +32,55 @@ def execRule(r, p):
 #tokens = [token for token in tokens if token is not 'amount']
 #algorithm: in t['targetRule'], get list of all nodes that fits this set of token specifications
 #ex. verb.blocked.amount -> look for a verb->blocked pattern
-def getNodeList(cur, tokens_, t):
+#idea: return only top matching node (verb in verb.blockable.amount)
+#       and let accessor go back and find verb.blockable in simple tree iterator
+#idea2: get last matching node (blockable in verb.blockable.amount) and 
+#       accessor directly 
+#idea1 allows easy showing of what is getting changed if needed (complete verb.blockable)
+#top firstMatch
+#false false - no matches
+#false true  - matched but no longer first, only return a matched has occur
+#true  false - no matches, recur call with top=True
+#true  true  - first match, if rest matches, add matched node to dict, recur call with top=false
+#nextTop = top and not match
+def getNodeList(cur, tokens_, t, top=False):
     'find matching nodes in cur tree to token list, add matches to dict t'
+    #top means first level with no match or first token match
     if len(tokens_) == 0 or tokens_[0] == 'amount':
         print 'match found!?!?!'
         return True
     if cur == None:
-        return []
+        return False
     print 'getNodeList: ', cur
     newTokens = tokens_
-    partialMatch = False
+    match = False
     if cur.action == tokens_[0] or cur.action in verbs:
-        partialMatch = True
+        match = True
         newTokens = tokens_[1:]
         print 'partial match found! ', cur.action, ' new tokens_: ', newTokens
-    lret = getNodeList(cur.left, newTokens, t)
-    rret = getNodeList(cur.right, newTokens, t)
-    if partialMatch and (lret or rret):
-        t.setdefault(tokens_[0], []).append(cur)
-        print 'appending to t: ', tokens_[0], t
+    nexttop = top and not match
+    lret = getNodeList(cur.left, newTokens, t, top=nexttop)
+    rret = getNodeList(cur.right, newTokens, t, top=nexttop)
+    if match and (lret or rret):
+        if top:
+            t.setdefault(tokens_[0], []).append(cur)
         return True
     return False
+
+def havePlayerSelect(l):
+    'given a list, ask player to choose a valid selection and return that element'
+    if not l or len(l) == 0:
+        raise ValueError('not a valid list for player to choose from')
+    if len(l) == 1:
+        print 'only 1 choice: ', l[0]
+        return l[0]
+    choice = 'not a valid choice'
+    for i, n in enumerate(l):
+        print "%d. %s" % (i+1, n)
+    while not is_int(choice) or not (1 <= int(choice) <= len(l)):
+        choice = raw_input('Enter choice: ')
+    return l[int(choice)-1]
+
 #recursive execution over AST
 #when a choice is encountered, present choices to player and ask for input
 #AST has 2 points: left, right; always execute left then right
@@ -63,7 +100,9 @@ def rexec(r, p, t=None):
         print 'rexec if cond: ', cond
         if cond == True:
             rexec(r.right, p, t)
-    elif '.' in r.action:
+    elif '.' in r.action: #metaVerb, should go into operate()
+        #this node just returns a value, will not be operated on... ex if verb.amount > 1
+        #verb.amount is this node
         print 'rexec has a .', t
         if t == None:
             raise ValueError("oh crap this isn't suppose to happen! t should be something!")
@@ -72,19 +111,18 @@ def rexec(r, p, t=None):
         print 'trying to match ', tokens
         root = t['targetNode']
         root.printMe()
-        getNodeList(root, tokens, t)
+        getNodeList(root, tokens, t, top=True)
         #if t has many nodes, ask user to decide
         #after choice made, go down and get amount if amount in action
         print t
         for k,v in t.items():
             print 'dict:', k,v
-        ret = None
-        key = tokens[-2] if tokens[-1] == 'amount' else tokens[-1]
+        key = tokens[0] 
         print 'printing key, tokens: ', key, tokens
-        if len(t[key]) == 1:
-            ret = t[key][0]
+        ret = havePlayerSelect(t[key])
+        t[key] = [ret] #replace array of possible nodes with user selected
         if 'amount' in r.action and ret:
-            return ret.amount #last qualifier (ex. verb.blockable->blockable)
+            return getRecursiveDictLookUp(ret, tokens, p).amount #last qualifier (ex. verb.blockable->blockable)
         else:
             print 'something wrong: ', r.action, ret
         
@@ -165,15 +203,31 @@ def printOptions(r, num, l, prevIsOr=True):
 
     return ret
 
-def getRecursiveDictLookUp(d, tokens):
-    if tokens == []:
+def getRecursiveDictLookUp(d, tokens, p):
+    'travels down tree and operate on last node matching tokens'
+    #for verb.blockable.amount, operate on trade.left.amount, 
+    # assuming trade.left.action=='blockable
+    print 'getRec: ', d, tokens, d.action == tokens[0]
+    if tokens == [] or d is None:
+        print 'getRec: reached end'
         return None
-    if (len(tokens) <= 2 and tokens[-1] == 'amount') or len(tokens) == 1:
-        return d[tokens[0]].amount
-    return getRecursiveDictLookUp(d[tokens[0]], tokens[1:])
+    if d.action == tokens[0] or (tokens[0] == 'verb' and d.action in verbs): #TODO what if verb means rules as well? want to modify ex. block 2 topRow???
+        print 'getRec: found a match', d.action
+        if (len(tokens) == 2 and tokens[1] == 'amount') or len(tokens) == 1:
+            return d
+        ret = getRecursiveDictLookUp(d.left, tokens[1:], p)
+        if ret:
+            return ret
+        ret = getRecursiveDictLookUp(d.right, tokens[1:], p)
+        if ret:
+            return ret
+    print 'getRec: nothing worked??', d
+    return None
+
 #check if player has right kind, if not, check alias and ask user for kind
 def operate(p, n, t=None):
     'modify a player resource, player[n.kind]'
+    #t is a dict {'verb':[ASTNode, ASTNode]}
     kind = n.kind
     print 'operating node: ', n.printMe()
     #print "Executing: ", n.action, n.amount, n.kind
@@ -181,10 +235,14 @@ def operate(p, n, t=None):
         #kind refers to a particular quantity variable, not p[kind]
         #preferably could find value by getting recursive dict lookup
         tokens = n.kind.split('.')
+        #operand = havePlayerSelect(t[tokens[0]]) #should only have 1 valid option
+        node = getRecursiveDictLookUp(t[tokens[0]][0], tokens, p)
         if n.action == 'add':
-            t[tokens[-2]][0].amount += n.amount
+            node.amount += n.amount
+            #t[tokens[-2]][0].amount += n.amount
         if n.action == 'subtract':
-            t[tokens[-2]][0].amount -= n.amount
+            node.amount -= n.amount
+            #t[tokens[-2]][0].amount -= n.amount
         return True
     while kind not in p:
         if n.kind in alias:
@@ -194,7 +252,7 @@ def operate(p, n, t=None):
     print 'you entered ', kind, ' is this a rule? ', isinstance(p[kind], ASTNode)
     if isinstance(p[kind], ASTNode): #kind refers to a rule (of type ASTNode); it's a metaVerb!
         print 'metaverb found! ', n.action
-        rexec(p[n.action], p, {'targetNode': p[kind]}) #execute as a rule with a target dictionary
+        return rexec(p[n.action], p, {'targetNode': p[kind]}) #execute as a rule with a target dictionary
     if n.action == "pay":
         newAmount = p[kind] - n.amount
         if newAmount < 0:
@@ -202,29 +260,8 @@ def operate(p, n, t=None):
         p[kind] = newAmount
     elif n.action == "gain":
         p[kind] = p[kind] + n.amount
-    elif n.action == "block" and False:
-        #remove 1 unit from a verb with attached blockable
-        #find all blockable nodes in given rule
-        choices = p[kind].getNodesWithChild("blockable")
-        sel = ''
-        s = None
-        while not is_int(sel) or in_range(choices, int(sel)):
-            for i, c in enumerate(choices):
-                print i, 
-                c.printMe()
-                print ''
-            sel = raw_input("Enter number: ")
-            s = choices[int(sel)]
-        #int(sel) is the user choice for which parent of a blockable gets to be blocked
-        #choices[int(sel)]
-        #s is the node with an attached blockable
-        if s.left.amount > 0 and s.amount > 0:
-            s.amount -= 1
-            s.left.amount -= 1
-    elif n.action == "unblock":
-        print "TODO: implement unblock"
     else:
-        print 'Unrecognized verb'
+        print 'Unrecognized verb:', n
 
     return True
 
@@ -309,11 +346,11 @@ if __name__ == '__main__':
             endif
         unblock:
             if verb.blocked.amount > 0 then
-                add 1 verb.amount and subtract 1 verb.blockable.amount
+                add 1 verb.amount and subtract 1 verb.blocked.amount
             endif
         upgrade:
             if pay 3 oil blockable 1 slot then 
-                block 1 topRow
+                block 1 topRow and unblock 1 botRow
             endif
         deploy:
             if pay 2 wood blockable 1 slot then
@@ -336,30 +373,46 @@ if __name__ == '__main__':
         col4: produce, enlist
         action: col1, col2, col3, col4
         topRow: trade, bolster, use, produce
-        botRow: upgrade, deploy, build, enlist
+        botRow: upgrade, deploy, build, enlist, bolster
         """
     #items
     ruleName = hexparser.parseItems(ruleItems)
     hexparser.parseItems(ruleResource)
     #rules
-    ruleName, ast = hexparser.parse(ruleBolster)
-    rules[ruleName] = ast
-    ast.printMe(0)
-    ruleName, ast = hexparser.parse(ruleTest)
-    rules[ruleName] = ast
+    #ruleName, ast = hexparser.parse(ruleBolster)
+    #rules[ruleName] = ast
+    #ast.printMe(0)
+    #ruleName, ast = hexparser.parse(ruleTest)
+    #rules[ruleName] = ast
     #players
     player1 = yaml.load(rulePlayerSetup)['Rusviet']
 
-    r = rules['test'] #global rules
+    #r = rules['test'] #global rules
     #r = player1['trade'] #per player rule
     #execRule(r, player1)
-
+    playerBolster = '''
+        bolster: 
+            if pay 2 coin then 
+                ( gain 2 power blocked 1 slot or gain 1 combatCard blocked 1 slot ) and gain 1 heart 
+            endif
+            '''
     aliases = formatMat(actionAliases)
     for a in aliases:
         print 'adding ', a
         hexparser.parseItems(a)
+    #parsePlayerMat(playerBolster, player1)
     parsePlayerMat(playerMat1, player1)
     r = player1['upgrade'] #global rules
     player1['block'].printMe()
+
+    print 'bolster: '
+    player1['bolster'].printMe()
+    print ''
+    #blockPrint()
     execRule(r, player1)
+    #enablePrint()
+    print 'trade: '
     player1['trade'].printMe()
+    print ''
+    print 'bolster: '
+    player1['bolster'].printMe()
