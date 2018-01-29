@@ -58,21 +58,23 @@ def rexec(r, p, t=None):
         if cond:
             rexec(r.right, p, t)
     elif '.' in r.action:  # metaVerb, should go into operate()
-        # this node just returns a value, will not be operated on... 
+        # this node just returns a value; will not be operated on
         # ex if verb.amount > 1
         # verb.amount is this node
         print 'rexec has a .', t
         if t is None:
             raise ValueError(
                 "oh crap this isn't suppose to happen! t should be something!")
-        #i tokens = filter(lambda x: x != 'amount', r.action.split('.'))
         tokens = r.action.split('.')
         print 'trying to match ', tokens
         root = t['targetNode']
         root.printMe()
-        ret = root.getMatchingNode(tokens, t, top=True)
+        # finds all nodes that match ex verb.blockable.amount
+        ret = root.getMatchingRoot(tokens, t, top=True)
+        # gets ret as trade, matches verb in verb.blockable
         if 'amount' in r.action and ret:
-            return getRecursiveDictLookUp(ret, tokens, p).amount
+            # takes for ex trade and gets the blockable from it
+            return ret.getSubTreeNode(tokens, p).amount
         else:
             print 'something wrong: ', r.action, ret
 
@@ -154,32 +156,6 @@ def printOptions(r, num, l, prevIsOr=True):
     return ret
 
 
-def getRecursiveDictLookUp(d, tokens, p):
-    'travels down tree and operate on last node matching tokens'
-    # for verb.blockable.amount, operate on trade.left.amount,
-    # assuming trade.left.action=='blockable
-    print 'getRec: ', d, tokens, d.action == tokens[0]
-    if tokens == [] or d is None:
-        print 'getRec: reached end'
-        return None
-    # TODO what if verb means rules as well? want to modify ex. block 2
-    # topRow???
-    if d.action == tokens[0] or (tokens[0] == 'verb' and d.action in verbs):
-        print 'getRec: found a match', d.action
-        if (len(tokens) == 2 and tokens[1] == 'amount') or len(tokens) == 1:
-            return d
-        ret = getRecursiveDictLookUp(d.left, tokens[1:], p)
-        if ret:
-            return ret
-        ret = getRecursiveDictLookUp(d.right, tokens[1:], p)
-        if ret:
-            return ret
-    print 'getRec: nothing worked??', d
-    return None
-
-# check if player has right kind, if not, check alias and ask user for kind
-
-
 def operate(p, n, t=None):
     'perform operation specified by node, either verb or metaVerb'
     # t is a dict {'verb':[ASTNode, ASTNode]}
@@ -190,7 +166,7 @@ def operate(p, n, t=None):
         # kind refers to a particular variable, not p[kind]
         tokens = n.kind.split('.')
         operand = t[tokens[0]][0]  # hardcoded ok, only has 1 item in this list
-        node = getRecursiveDictLookUp(operand, tokens, p)
+        node = operand.getSubTreeNode(tokens, p)
         if n.action == 'add':
             node.amount += n.amount
         elif n.action == 'subtract':

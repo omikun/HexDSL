@@ -27,16 +27,44 @@ class ASTNode(object):
         self.amount = 0
         self.kind = ""
 
-    def getMatchingNode(self, tokens_, t, top=False):
-        self.getMatchingNodes(tokens_, t, top)
+    def getMatchingRoot(self, tokens_, t, top=False):
+        self.getMatchingRoots(tokens_, t, top)
         key = tokens_[0]
         print key, t
         ret = havePlayerSelect(t[key])
         t[key] = [ret]
         return ret
 
-    def getMatchingNodes(self, tokens_, t, top=False):
-        'find matching nodes in cur tree to token list, add matches to dict t'
+    def getSubTreeNode(self, tokens, p):
+        'travels down tree and returns last node matching token list'
+        # only supports 1 match
+        # although currently, 1/28/18, only need to go down left sides
+        # for verb.blockable.amount, operate on trade.left.amount,
+        # assuming trade.left.action=='blockable
+        print 'getRec: ', self, tokens, self.action == tokens[0]
+        if tokens == []:
+            print 'getRec: reached end'
+            return None
+        # TODO what if verb means rules as well? want to modify ex. block 2
+        # topRow???
+        if self.action == tokens[0] or (tokens[0] == 'verb' and self.action in verbs):
+            print 'getRec: found a match', self.action
+            if (len(tokens) == 2 and tokens[1] == 'amount') or len(tokens) == 1:
+                return self
+            if self.left:
+                ret = self.left.getSubTreeNode(tokens[1:], p)
+                if ret:
+                    return ret
+            if self.right:
+                ret = self.right.getSubTreeNode(tokens[1:], p)
+                if ret:
+                    return ret
+        print 'getRec: nothing worked??', self
+        return None
+
+    def getMatchingRoots(self, tokens_, t, top=False):
+        'find matching nodes in cur tree to token list, adds root matches to t'
+        # supports multiple matches!
         # top means first level with no match or first token match
         if len(tokens_) == 0 or tokens_[0] == 'amount':
             print 'match found!?!?!'
@@ -48,13 +76,13 @@ class ASTNode(object):
             match = True
             lastMatch = len(tokens_) == 2 and tokens_[-1] == 'amount'
             newtokens = tokens_[1:]
-            print 'partial match found! ', self.action, ' new tokens_: ', newtokens
+            print 'partial match ', self.action, ' new tokens_: ', newtokens
         nexttop = top and not match
         lret, rret = None, None
         if self.left:
-            lret = self.left.getMatchingNodes(newtokens, t, top=nexttop)
+            lret = self.left.getMatchingRoots(newtokens, t, top=nexttop)
         if self.right:
-            rret = self.right.getMatchingNodes(newtokens, t, top=nexttop)
+            rret = self.right.getMatchingRoots(newtokens, t, top=nexttop)
         if match and (lastMatch or lret or rret):
             if top:
                 print 'adding to t: ', self
