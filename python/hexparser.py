@@ -3,6 +3,7 @@ from rule import *
 from rule import ASTNode
 'Board Game Description Language'
 
+
 def tokenize(rule):
     "takes rule string and convert to list of tokens"
     bigTokens = rule.split(':')
@@ -11,7 +12,8 @@ def tokenize(rule):
     ruleName = bigTokens[0]
     tokens = bigTokens[1].strip().replace(',', "").split(' ')
     return ruleName, tokens
-    
+
+
 def parse(rule):
     "tokenize, then parseExpression"
     name, tokens = tokenize(rule)
@@ -21,7 +23,8 @@ def parse(rule):
     ast = parseExpression(it)
     ast.printMe()
     return name, ast
-    #return it
+    # return it
+
 
 def parseItems(inputRule):
     "for parsing items and aliases only"
@@ -35,7 +38,7 @@ def parseItems(inputRule):
                 items[token] = []
         except StopIteration:
             pass
-    else: #alias
+    else:  # alias
         l = []
         try:
             while True:
@@ -48,33 +51,36 @@ def parseItems(inputRule):
 
     return
 
+
 def parseIfThen(it):
-    #if ->L condition
+    # if ->L condition
     #   ->R then    ->L execute if condition == True
     #               ->R None
-    #TODO need to be able to differentiate between if then and if then else, 
-    #otherwise just stick with if then
+    # TODO need to be able to differentiate between if then and if then else
+    # otherwise just stick with if then
     ifNode = ASTNode("if")
     thenNode = ASTNode("then")
     ifNode.left = parseExpression(it, "then")
     ifNode.right = thenNode
     thenNode.left = parseExpression(it, "endif")
-    #TODO how to handle optional else case?
+    # TODO how to handle optional else case?
     return ifNode
 
+
 def parseVerb(token, it):
-    #verbs are always defined as verb amount kind; eg. pay 2 coin
+    # verbs are always defined as verb amount kind; eg. pay 2 coin
     node = ASTNode(token)
     node.amount = int(it.next())
     node.kind = it.next()
     return node
 
+
 def parseExpression(it, endMarker="eol"):
     "recursive parser, returns when endMarker is encountered"
-    #expressions operator expressions
-    #if ... then ... endif
-    #verb number kind
-    
+    # expressions operator expressions
+    # if ... then ... endif
+    # verb number kind
+
     outputs = []
     ops = []
     localNode = None
@@ -94,18 +100,18 @@ def parseExpression(it, endMarker="eol"):
                 outputs.append(localNode)
             elif token in operators:
                 print token
-                localNode = ASTNode(token) 
+                localNode = ASTNode(token)
                 ops.append(localNode)
             elif token in verbs or token == 'blockable' or token == 'blocked':
                 #print 'parsed a verb or verbish ', token
                 localNode = parseVerb(token, it)
                 print localNode
-                if prevWasVerb == True:
+                if prevWasVerb:
                     lastVerb.left = localNode
                 else:
                     outputs.append(localNode)
                 lastVerb = localNode
-            elif token == "ask": #TODO maybe don't need this?
+            elif token == "ask":  # TODO maybe don't need this?
                 localNode = ASTNode(token)
                 localNode.left = parseExpression(it, "endask")
                 ops.append(localNode)
@@ -115,32 +121,33 @@ def parseExpression(it, endMarker="eol"):
 
             prevWasVerb = token in verbs
 
-            if localRoot == None:
+            if localRoot is None:
                 localRoot = localNode
-                
+
             token = it.next()
     except StopIteration:
         pass
 
-    #shunt-yard algorithm, check wiki; 
+    # shunt-yard algorithm, check wiki;
     # pop both queues, op.right = output, op.left = next op
     if len(ops) > 0:
         localRoot = ops[-1]
         prevNode = None
         while (len(ops) > 0):
             node = ops.pop()
-            if (prevNode != None):
+            if (prevNode is not None):
                 prevNode.left = node
             if len(outputs) > 0:
                 node.right = outputs.pop()
             prevNode = node
-    
+
         if len(outputs) > 0:
             prevNode.left = outputs.pop()
     return localRoot
 
+
 if __name__ == '__main__':
-    #TODO get rid of endif unless there's nested ifs
+    # TODO get rid of endif unless there's nested ifs
     ruleBolster = 'bolster: if pay 2 coin blocked 2 slot then gain 1 resource and ( gain 1 resource or gain 1 heart ) endif'
     ruleName, ast = parse(ruleBolster)
     rules[ruleName] = ast

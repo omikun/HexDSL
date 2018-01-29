@@ -1,20 +1,24 @@
-#defines Abstract Syntax Tree class, data structure to represent rules
+'defines Abstract Syntax Tree class, data structure to represent rules'
+from common import *
 
-#global arrays to be used by game
+# global arrays to be used by game
 rules = {}
 items = {}
 alias = {}
 
-#helper function
+
 def printAST(name):
     rules[name].printMe(0)
     return
 
-#operators are separate from verbs
-#operators affect AST
-#verbs are all the same, but have different impact when executed
+
+# operators are separate from verbs
+# operators affect AST
+# verbs are all the same, but have different impact when executed
 operators = ["+", "-", "and", "or", ">", ">=", "<", "<="]
 verbs = ["pay", "gain", "add", "subtract", "block", "unblock", "spawn"]
+
+
 class ASTNode(object):
     def __init__(self, name):
         self.action = name
@@ -23,9 +27,45 @@ class ASTNode(object):
         self.amount = 0
         self.kind = ""
 
+    def getMatchingNode(self, tokens_, t, top=False):
+        self.getMatchingNodes(tokens_, t, top)
+        key = tokens_[0]
+        print key, t
+        ret = havePlayerSelect(t[key])
+        t[key] = [ret]
+        return ret
+
+    def getMatchingNodes(self, tokens_, t, top=False):
+        'find matching nodes in cur tree to token list, add matches to dict t'
+        # top means first level with no match or first token match
+        if len(tokens_) == 0 or tokens_[0] == 'amount':
+            print 'match found!?!?!'
+            return True
+        print 'getNodeList: ', self
+        newtokens = tokens_
+        match, lastMatch = False, False
+        if self.action == tokens_[0] or self.action in verbs:
+            match = True
+            lastMatch = len(tokens_) == 2 and tokens_[-1] == 'amount'
+            newtokens = tokens_[1:]
+            print 'partial match found! ', self.action, ' new tokens_: ', newtokens
+        nexttop = top and not match
+        lret, rret = None, None
+        if self.left:
+            lret = self.left.getMatchingNodes(newtokens, t, top=nexttop)
+        if self.right:
+            rret = self.right.getMatchingNodes(newtokens, t, top=nexttop)
+        if match and (lastMatch or lret or rret):
+            if top:
+                print 'adding to t: ', self
+                t.setdefault(tokens_[0], []).append(self)
+            return True
+        return False
+
+
     def getNodesWithChild(self, a):
         'return list of nodes with a child of action a, assumes no nesting'
-        if self == None:
+        if self is None:
             return False
         ret = []
         lret, rret = None, None
@@ -35,16 +75,17 @@ class ASTNode(object):
             lret = self.left.getNodesWithChild(a)
         if self.right:
             rret = self.right.getNodesWithChild(a)
-        if lret == True or rret == True:
+        if lret or rret:
             return self
-        if lret and lret != False:
+        if lret and lret:
             ret.append(lret)
-        if rret and rret != False:
+        if rret and rret:
             ret.append(rret)
         return ret
+
     def getNodes(self, a):
         'return list of nodes with action a, returns can nest'
-        if self == None:
+        if self is None:
             return None
         ret = []
         if self.action == a:
@@ -63,17 +104,17 @@ class ASTNode(object):
         print "node: ", self.action, self.amount, self.kind
 
     def __repr__(self):
-        return "%s %s %s" % (self.action , str(self.amount) , self.kind)
-        
+        return "%s %s %s" % (self.action, str(self.amount), self.kind)
+
     def printMe(self, depth=0):
         "print sub tree with self as root"
-        if self == None:
+        if self is None:
             return
         print self,
-        if self.left != None:
+        if self.left is not None:
             print "\t->L", depth, " ",
-            self.left.printMe(depth+1)
-        if self.right == None:
+            self.left.printMe(depth + 1)
+        if self.right is None:
             return
         tabs = "\t"
         for i in xrange(depth):
@@ -81,7 +122,7 @@ class ASTNode(object):
 
         print ""
         print tabs, "->R", depth, " ",
-        self.right.printMe(depth+1)
+        self.right.printMe(depth + 1)
 
 
 if __name__ == '__main__':
