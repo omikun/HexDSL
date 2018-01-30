@@ -1,37 +1,37 @@
 Requirements for BGDL
 
     - Human readable, understandable with minimal ramp-up
-	- Any non-programmers should be able to learn the language in 1 minute
-	- Stick to a subset of English, minimize use of non-alphanumerics
-	- Should be more terse than writing out equivalent logic in python 
+        - Any non-programmers should be able to learn the language in 1 minute
+        - Stick to a subset of English, minimize use of non-alphanumerics
+        - Should be more terse than writing out equivalent logic in python 
 	    - otherwise just stick to python
     - Language development workflow:
-	- Start with an English description of rules
-	- Reduce that down to a non-ambiguous, computer parseable form
-	- Add symbols for hard to parse phrases or stick to simpler descriptions that may be more verbose
+        - Start with an English description of rules
+        - Reduce that down to a non-ambiguous, computer parseable form
+        - Add symbols for hard to parse phrases or stick to simpler descriptions that may be more verbose
     - implicit: when an alias is encountered, ask player to pick
 
 keywords: 
 
     - players, alias, items, rules, winner, 
-	- players is a list of players
-	- alias is a list of names that mean other things
-	- items is a list of countable things
-	- rules is a list of actionable things
-	- winner is a game winner - game will print the winning player's name
+        - players is a list of players
+        - alias is a list of names that mean other things
+        - items is a list of countable things
+        - rules is a list of actionable things
+        - winner is a game winner - game will print the winning player's name
     - for endfor, in, then, if endif, add to, endGame, next, play
-	- for... then ... endfor is a standard for loop
-	- if... then ... endif is a standard if
-	- then ends the condition of for/if
-	- var in list is used to instantiate var
-	- add thing to otherThing adds thing into the dictionary of otherThing
-	- endGame ends the game/terminates loops
-	- next returns next element in list
-	    - current is the current element, can be changed
-	- player play rule plays global rules
-	- player.play executes player specific rules
-	    - to do both: 
-		player play or player.play
+        - for... then ... endfor is a standard for loop
+        - if... then ... endif is a standard if
+        - then ends the condition of for/if
+        - var in list is used to instantiate var
+        - add thing to otherThing adds thing into the dictionary of otherThing
+        - endGame ends the game/terminates loops
+        - next returns next element in list
+            - current is the current element, can be changed
+        - player play rule plays global rules
+        - player.play executes player specific rules
+            - to do both: 
+        	player play or player.play
     - : ,
 
 Sample BGDL:
@@ -93,27 +93,20 @@ mat1:
 checkWinCondition:
 
     for player in players then
-    
-	checkWinConditionFor player
-	
+        checkWinConditionFor player
     endfor
 
 checkWinConditionFor player:
 
     if player.stars >= 20 then
-    
-	winner = player
-	
-	endGame
-	
+        winner = player
+        endGame
     endif
 
 Setup:
 
     for player in players then
-    
-	add mats to player
-	
+        add mats to player
     endfor
 
 Game:
