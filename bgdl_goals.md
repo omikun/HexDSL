@@ -80,14 +80,10 @@ p1:
 mat1:
 
     trade:
-    
 	if pay 2 coin then gain 4 star endif
     bolster:
-    
 	if pay 2 stars then gain 3 power endif
-	
     produce:
-    
 	if pay 1 power then gain 4 star endif
 	
 checkWinCondition:
@@ -112,9 +108,6 @@ Setup:
 Game:
 
     player.play
-    
     checkWinConditionFor player
-    
     checkWinCondition
-    
     player = players.next
