@@ -12,6 +12,7 @@ Requirements for BGDL
     - implicit: when an alias is encountered, ask player to pick
 
 keywords: 
+
     - players, alias, items, rules, winner, 
 	- players is a list of players
 	- alias is a list of names that mean other things
@@ -39,9 +40,11 @@ players: p1, p2
 nums: 1, 2, 3, 4, 5, 6
 
 pickNum:
+
     return nums
 
 Game:
+
     choose = player play pickNum
     player = players.next
     guess = player player pickNum
@@ -53,13 +56,19 @@ Game:
 simple_scythe.bgdl:
 
 players: p1, p2, p3
+
 alias:
+
     resource: wood, oil, food, metal
     play: trade, bolster, produce
     mats: mat1, mat2, mat3, mat4
+    
 items: wood, oil, food, metal, star, coin, power
+
 rules: checkWinCondition, checkWinConditionFor
+
 p1: 
+
     coin: 4
     power: 1
     heart: 0
@@ -67,31 +76,52 @@ p1:
     oil: 1
     food: 1
     metal: 0
+
 mat1:
+
     trade:
+    
 	if pay 2 coin then gain 4 star endif
     bolster:
+    
 	if pay 2 stars then gain 3 power endif
+	
     produce:
+    
 	if pay 1 power then gain 4 star endif
+	
 checkWinCondition:
+
     for player in players then
+    
 	checkWinConditionFor player
+	
     endfor
 
 checkWinConditionFor player:
+
     if player.stars >= 20 then
+    
 	winner = player
+	
 	endGame
+	
     endif
 
 Setup:
+
     for player in players then
+    
 	add mats to player
+	
     endfor
 
 Game:
+
     player.play
+    
     checkWinConditionFor player
+    
     checkWinCondition
+    
     player = players.next
