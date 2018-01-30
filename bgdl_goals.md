@@ -1,4 +1,4 @@
-Requirements for BGDL
+# Requirements for BGDL
 
     - Human readable, understandable with minimal ramp-up
         - Any non-programmers should be able to learn the language in 1 minute
@@ -11,7 +11,7 @@ Requirements for BGDL
         - Add symbols for hard to parse phrases or stick to simpler descriptions that may be more verbose
     - implicit: when an alias is encountered, ask player to pick
 
-keywords: 
+# keywords: 
 
     - players, alias, items, rules, winner, 
         - players is a list of players
@@ -34,8 +34,8 @@ keywords:
         	player play or player.play
     - : ,
 
-Sample BGDL:
-pick num:
+# Sample BGDL:
+## pick num:
 players: p1, p2
 nums: 1, 2, 3, 4, 5, 6
 
@@ -53,7 +53,7 @@ Game:
 	endGame
     endif
 
-simple_scythe.bgdl:
+## simple_scythe.bgdl:
 
 players: p1, p2, p3
 
