@@ -113,3 +113,64 @@ Game:
     checkWinConditionFor player
     checkWinCondition
     player = players.next
+
+## blackjack
+
+    cards: ace, 2,3,4,5,6,7,8,9,jack,queen, king
+    oneorace: 1, 10
+    yesno: 0, 1
+    stack: 
+    
+    resolve:
+        score = 0
+        for card in hand then
+    	if card is jack or queen or king then
+    	    score += 10
+    	elseif card is ace then 
+    	    score += ask oneorace
+    	else
+    	    score += card
+    	endif
+        endfor
+        if score == 21 then
+    	winner = player
+    	endgame
+        else score > 21 then
+    	remove player from players
+        endif
+        if players.length == 1 then
+    	for player in players then
+    	    winner = player
+    	    endgame
+    	endfor
+        endif
+    
+    pickCards:
+        card = cards.top
+        remove card from cards
+        return card
+    
+    play:
+        print 'get one more card?'
+        if ask yesno then
+    	getCard
+        endif
+    
+    getCard:
+        hand += pickCards
+        add card to player.hand
+        print 'split hand?'
+        if ask yesno then
+    	#this might be very complicated...
+        endif
+    
+    setup:
+        add cards to stack
+        add cards to stack
+        add cards to stack
+        add cards to stack
+        shuffle stack
+    
+    loop:
+        player.play
+        resolve 
