@@ -133,16 +133,16 @@ Game:
     	endif
         endfor
         if score == 21 then
-    	winner = player
+    	    winner = player
     	endgame
         else score > 21 then
-    	remove player from players
+    	    remove player from players
         endif
         if players.length == 1 then
-    	for player in players then
-    	    winner = player
-    	    endgame
-    	endfor
+    	    for player in players then
+    	        winner = player
+    	        endgame
+    	    endfor
         endif
     
     pickCards:
@@ -153,15 +153,16 @@ Game:
     play:
         print 'get one more card?'
         if ask yesno then
-    	getCard
+    	    getCard
         endif
     
     getCard:
+    	print hand
         hand += pickCards
         add card to player.hand
         print 'split hand?'
         if ask yesno then
-    	#this might be very complicated...
+    	    #this might be very complicated...
         endif
     
     setup:
