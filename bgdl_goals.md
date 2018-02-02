@@ -175,3 +175,37 @@ Game:
     loop:
         player.play
         resolve 
+
+## from chaos... legion?
+
+### Rule in plane English
+
+    In each region with a Hero token, the player with the greatest Threat who also has at least one figure in that region must choose one of his figures in that region, and remove it from the board.
+
+### in BGDL
+
+    player pick a figure from list:
+        print list to player
+        figure = player pick list   
+
+    player return num figure from list:
+        for i in num then
+            player pick a figure from list
+            name = figure.player
+            add figure to collection.name 
+            remove figure from list
+
+    for each region in regions then
+        if region has hero then
+            maxthreatplayer = (players with figures in region) with max threat
+            figures = mtp.figures in region
+            ask maxthreatplayer return 1 figure from figures
+        endif
+    endfor
+
+### implicit: 
+
+    list.attr              >> [elem[attr] for elem in list if attr in elem]
+    list with max attr     >> max(elem[attr] for elem in list)
+    list with attr         >> filter(lambda x: x == attribute, list)
+    list with attr == val  >> [elem for elem in list if elem[attr] == val]
