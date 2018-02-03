@@ -71,8 +71,6 @@ parserules = [('list attr'.split(' '), parseListAttr),
 def parser(tokens):
     'identify how to parse tokens and calls corresponding rule parser'
     # ex cats with poop >>= list with attr
-    # tree technique
-    lst = None
     m = {}
     for parserule, parsefunc in parserules:
         #print 'trying ', parserule, parsefunc.__name__
@@ -89,20 +87,21 @@ def parser(tokens):
             return parsefunc(tokens)
     raise ValueError('Error: malformed token sequence '+tokens)
 
-for fur in 'brown black blacknwhite white grey'.split(' '): c.setdefault('cats', []).append({'fur':fur})
-for i, cat in enumerate(c['cats']): cat['poop'] = i
-c['cats'][1]['name'] = 'shadow'
-c['cats'][2]['name'] = 'momo'
-
-print c
-rule = "cats name".split(' ')
-print parser(rule)
-rule2 = 'cats with max poop'.split(' ')
-print parser(rule2)
-rule3 = 'cats with name'.split(' ')
-print parser(rule3)
-rule4 = 'cats with name == momo'.split(' ')
-print parser(rule4)
-rule5 = 'cats with fur in allergicToMe'.split(' ')
-c['allergicToMe'] = 'blacknwhite brown'.split(' ')
-print parser(rule5)
+if __name__ == '__main__':
+    for fur in 'brown black blacknwhite white grey'.split(' '): c.setdefault('cats', []).append({'fur':fur})
+    for i, cat in enumerate(c['cats']): cat['poop'] = i
+    c['cats'][1]['name'] = 'shadow'
+    c['cats'][2]['name'] = 'momo'
+    
+    print c
+    rule = "cats name".split(' ')
+    print parser(rule)
+    rule2 = 'cats with max poop'.split(' ')
+    print parser(rule2)
+    rule3 = 'cats with name'.split(' ')
+    print parser(rule3)
+    rule4 = 'cats with name == momo'.split(' ')
+    print parser(rule4)
+    rule5 = 'cats with fur in allergicToMe'.split(' ')
+    c['allergicToMe'] = 'blacknwhite brown'.split(' ')
+    print parser(rule5)
