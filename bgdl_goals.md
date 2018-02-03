@@ -178,10 +178,19 @@ Game:
 
 ## from chaos... legion?
 
-### Rule in plane English
+### Rule from plain English to more parseable form
 
     In each region with a Hero token, the player with the greatest Threat who also has at least one figure in that region must choose one of his figures in that region, and remove it from the board.
 
+    for each region in regions, if region has hero then the player with figures in region who has greatest threat return one of his figures in region
+
+    for each region with hero, (players with figures in region) with max threat remove 1 of his figures in region
+
+    for each region with hero, the player with max threat from (players with figures in region) with max threat remove 1 of his figures in region
+
+    for each region in (regions with hero):
+        thisplayer = (players with figures in region) with max threat
+        ask thisplayer to return 1 of his figures in region
 ### in BGDL
 
     player pick a figure from list:
