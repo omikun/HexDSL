@@ -35,7 +35,7 @@ def parseListAttr(tokens):
 
 def parseReduceList(tokens):
     'list with max attribute'
-    lst,wth,func,attr = tokens
+    lst, wth, func, attr = tokens
     lst = c[lst]
     if func in vars(__builtins__):
         return vars(__builtins__)[func](lst, key=lambda e: e[attr])
@@ -44,42 +44,42 @@ def parseReduceList(tokens):
 
 def parseFilterList(tokens):
     'list with attribute'
-    lst,wth,attr = tokens
+    lst, wth, attr = tokens
     lst = c[lst]
     return filter(lambda e: attr in e, lst)
 
 def parseFilterListByMembership(tokens):
     'list with attribute in list2'
-    lst,wth,attr,i,lst2 = tokens
+    lst, wth, attr, i, lst2 = tokens
     lst, lst2 = c[lst], c[lst2]
     return filter(lambda e: attr in e and e[attr] in lst2, lst)
 
 def parseFilterListWithVal(tokens):
     'list with attribute == val'
-    lst,wth,attr,eq,val = tokens
+    lst, wth, attr, eq, val = tokens
     lst = c[lst]
     return filter(lambda e: attr in e and e[attr] == val, lst)
 
-funcs = {'list':islist, 'attr':isattr, 'func':isfunc, 'any':isany}
+funcs = {'list': islist, 'attr': isattr, 'func': isfunc, 'any': isany}
 parserules = [('list attr'.split(' '), parseListAttr),
               ('list with attr == any'.split(' '), parseFilterListWithVal),
               ('list with attr in list'.split(' '), parseFilterListByMembership),
               ('list with attr'.split(' '), parseFilterList),
               ('list with func attr'.split(' '), parseReduceList),
-             ]
+              ]
 
 def parser(tokens):
     'identify how to parse tokens and calls corresponding rule parser'
     # ex cats with poop >>= list with attr
     m = {}
     for parserule, parsefunc in parserules:
-        #print 'trying ', parserule, parsefunc.__name__
+        # print 'trying ', parserule, parsefunc.__name__
         matchparserule = True
         if len(tokens) != len(parserule):
             continue
-        for token,term in zip(tokens, parserule):
-            if not (term in funcs and funcs[term](m, token) ) \
-                and term != token:
+        for token, term in zip(tokens, parserule):
+            if not (term in funcs and funcs[term](m, token)) \
+              and term != token:
                 matchparserule = False
                 break
         if matchparserule:
@@ -88,8 +88,10 @@ def parser(tokens):
     raise ValueError('Error: malformed token sequence '+tokens)
 
 if __name__ == '__main__':
-    for fur in 'brown black blacknwhite white grey'.split(' '): c.setdefault('cats', []).append({'fur':fur})
-    for i, cat in enumerate(c['cats']): cat['poop'] = i
+    for f in 'brown black blacknwhite white grey'.split(' '):
+        c.setdefault('cats', []).append({'fur': f})
+    for i, cat in enumerate(c['cats']):
+        cat['poop'] = i
     c['cats'][1]['name'] = 'shadow'
     c['cats'][2]['name'] = 'momo'
     
