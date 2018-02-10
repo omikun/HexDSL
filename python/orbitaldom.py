@@ -49,6 +49,35 @@ class Issue:
         self.opinion = self.getOpinionOn(issue) 
         return not srandom.randint(-10,0) < self.opinion < srandom.randint(1, 10)
 
+class GovernmentProgram:
+    def __init__(self, name, topic, fund, t=None):
+        'a gov program, possibly more than 1 per topic'
+        self.name = name
+        self.topic = topic
+        self.annualFund = fund
+        self.outrageThreshold = t if t else srandom.randint(10, 70)
+
+    def changeFunding(self, amount):
+        if amount < 0:
+            self.cutFunding(-amount)
+        else:
+            self.addFunding(amount)
+    
+    def addFunding(self, amount):
+        # if people love this above a threshold, boost productivity, political capital?
+        self.annualFund += amount
+
+    def cutFunding(self, amount):
+        if self.annualFund < amount:  # can't cut more than current funding
+            raise ValueError('hey man, you cant be cutting more than allocated' + self.topic + '.' +self.name)
+        else:
+            self.annualFund -= amount
+        if (amount * 100) / self.annualFund > self.outrageThreshold:  # cutting more than
+            print 'start a public outcry!!'
+    
+    def DoStuff(self):
+        'event tick per turn, what does this program do??'
+
 class Democracy:
     'represents 1 layer of democracy, ie: public/poltician, politician/bill'
     def __init__(self, name, pop, public=True):
@@ -65,8 +94,9 @@ class Democracy:
             randtopic = srandom.choice(issueTopics)
             while randtopic in contents.keys():
                 randtopic = srandom.choice(issueTopics)
-            # currently calculates preference or impact to voter pref
             # need to start with fiscal impact, then translate that to voter pref impact
+
+            # currently calculates preference or impact to voter pref
             b = itbounds[randtopic]
             contents[randtopic] = srandom.randint(-10, 10)  # b[0], b[1])
         self.bill = Issue(contents)
