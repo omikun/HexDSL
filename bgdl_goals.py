@@ -268,18 +268,35 @@ for each region with hero, the player with max threat from (players with figures
         tax = 3300  # annual in billions
         Discretionary:
             defense: 
-                military: 500    +1 mil stat
-                intelligence: 50 +1 foreign intelligence
-                surveillance: 10 +1 spy, +1 terrorist detection
+                military: 500    
+                    milstat: 1
+                intelligence: 50
+                    foreign_intelligence: +1
+                surveillance: 10 
+                    spy: 1
+                    findTerrorists: 1
             Nondefense: 
-                agriculture: 25 +1 food
-                space: 20       +1 space colonization
-                research: 30    +1 tech, +1 productivity
-                healthcare: 50  -1 health costs
-                police: 180     -1 crime, +1 order
-                infrastructure: 120 +1 roads, +1 trust
-                borderProtection: 10    +1 trust, -1 immigration
-                immigration: 5  +1 immigration, 2nd order effects
+                agriculture: 25
+                    food: 2
+                space: 20
+                    space_colonization: 1
+                research: 30
+                    tech: 1
+                    productivity: 1
+                healthcare: 50
+                    health_costs: -1
+                police: 180
+                    crime: -1
+                    order: 1
+                infrastructure: 120
+                    roads: 1
+                    trust: 1
+                borderProtection: 10
+                    trust: 1
+                    immigration: -1
+                immigration: 5
+                    imigration: -1
+                    second_order_effects: 2
         Mandatory:
             # these grow in proportion to retirees, sick, debt
             socialwelfare: 900  # medicaid/medicare

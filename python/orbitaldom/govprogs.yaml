@@ -1,0 +1,50 @@
+Discretionary:
+    military: 
+        budget: 500
+        milstat: 1
+    intelligence: 
+        budget: 50
+        spy: 2
+    surveillance:
+        budget:  10 
+        spy: 1
+        findTerrorists: 1
+    agriculture: 
+        budget: 25
+        food: 2
+    space:
+        budget:  20
+        space_colonization: 1
+    research: 
+        budget:  30
+        tech: 1
+        productivity: 1
+    healthcare:
+        budget: 50
+        health_costs: -1
+    police: 
+        budget: 180
+        crime: -1
+        order: 1
+    infrastructure:
+        budget: 120
+        roads: 1
+        trust: 1
+    borderProtection:
+        budget: 10
+        trust: 1
+        immigration: -1
+    immigration:
+        budget: 5
+        imigration: -1
+        second_order_effects: 2
+Mandatory:
+    # these grow in proportion to retirees, sick, debt
+    socialwelfare:
+        budget: 900  # medicaid/medicare
+    socialsecurity: 
+        budget: 910
+    interest: 
+        budget: 241
+    Other: 
+        budget: 563

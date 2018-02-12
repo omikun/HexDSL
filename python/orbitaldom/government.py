@@ -2,7 +2,7 @@
 from common import srandom, itbounds, issueTopics, is_int
 from issue import Issue, Citizen
 from democracy import Democracy
-
+import yaml
 
 class GovernmentProgram:
     'impacts public, good and bad'
@@ -64,21 +64,13 @@ class Government:
         self.politicalcapital = 10
         self.darkmoney = 10
         self.citizens = citizens
-        self.programs = {'Discretionary': {}, 'Mandatory': {}}
-        budget = '''military 500 milstat.+1
-                  intelligence 50 foreignSpy.+1
-                  surveillance 10 domesticSpy.+1,findTerrorists.+1
-                  agriculture 25 food.+1
-                  '''.split('\n')
-        budget = [filter(lambda x: x, p.split(' ')) for p in budget]
+        with open('govprogs.yaml') as f:
+            budget = yaml.load(f)
         print budget
-        
-        for prog in budget:
-            prog_budget = prog[1]
-            effects = {}
-            gp = GovernmentProgram(t, t, effects, prog_budget)
-            self.programs['Discretionary'][prog[0]] = gp
-        # TODO implement mandatory/discretionary spending, bills to ammend
+        self.programs = budget
+        if 'Discretionary' not in self.programs:
+            raise ValueError('needs to have discretionary spending in budget yaml')
+        return
     
     def __repr__(self):
         s = ''
