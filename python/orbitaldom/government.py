@@ -1,17 +1,24 @@
 'government consists of programs and voting body on bills'
-from common import srandom, itbounds, issueTopics
+from common import srandom, itbounds, issueTopics, is_int
 from issue import Issue, Citizen
 from democracy import Democracy
 
 
 class GovernmentProgram:
     'impacts public, good and bad'
-    def __init__(self, name, topic, fund, t=None):
+    def __init__(self, name, topic, fund, effects, outrage=None):
         'a gov program, possibly more than 1 per topic'
         self.name = name
         self.topic = topic
         self.annualFund = fund
-        self.outrageThreshold = t if t else srandom.randint(10, 70)
+        self.outrageThreshold = outrage if outrage else srandom.randint(10, 70)
+        self.effects = effects
+    
+    def __repr__(self):
+        s = ''
+        for k, v in self.__dict__.items():
+            s += '\t' + k + ':' + str(v) + '\n'
+        return s
 
     def changeFunding(self, amount):
         'reflect funding change'
@@ -46,29 +53,152 @@ class GovernmentProgram:
 
 
 class Government:
-    'public votes for senate members, senate votes on bills: budget in billions'
+    'programs that affect citizens, lets a senate vote on those bills'
     # TODO implement public 
     def __init__(self, name, budget, citizens):
         self.name = name
+        self.bill = {}  # not same bill as senate.bill - this is just budget
         self.public = Democracy('public', 435, public=True)
         self.senate = Democracy('Senate', 100, public=False)
         self.budget = budget
-        self.programs = {}
+        self.politicalcapital = 10
+        self.darkmoney = 10
         self.citizens = citizens
-        for t in issueTopics:
-            self.programs[t] = GovernmentProgram(t, t, budget/len(issueTopics))
+        self.programs = {'Discretionary': {}, 'Mandatory': {}}
+        budget = '''military 500 milstat.+1
+                  intelligence 50 foreignSpy.+1
+                  surveillance 10 domesticSpy.+1,findTerrorists.+1
+                  agriculture 25 food.+1
+                  '''.split('\n')
+        budget = [filter(lambda x: x, p.split(' ')) for p in budget]
+        print budget
+        
+        for prog in budget:
+            prog_budget = prog[1]
+            effects = {}
+            gp = GovernmentProgram(t, t, effects, prog_budget)
+            self.programs['Discretionary'][prog[0]] = gp
         # TODO implement mandatory/discretionary spending, bills to ammend
-        # self.programs = {'Discretionary': [], 'Mandatory': []}
+    
+    def __repr__(self):
+        s = ''
+        for k, v in self.__dict__.items():
+            if k != 'citizens':
+                s += k + ' : ' + str(v) + '\n'
+        return s
 
     def newBill(self):
         # figure out which gov program to change
         # compute available amount of money in bill
+        # compute preference delta from funding changes
+        # ask democracy to vote
         pass
+        
 
-    def sendBillToSenate(self, bill):
-        self.senate.countVote(bill)
+    def voteBill(self):
+        self.senate.voteBill()
+        # it would be great to freeze a bill, and change one vote
     
+    def doPolitics(self):
+        'influence senators in general or influence a particular senator'
+        topic, degree = askBillEntry()
+        # how much would this cost? money? political capital? rider?
+        if self.doPolitk(topic, degree):
+            # take 2 most negative in topic and bump them by degree
+            pass
+    
+    def doMorePolitics(self):
+        'could try to get bill vetoed'
+        print "That's going to cost you "
+        # do something special
+        if self.doPolitk():
+            self.senate.bill = None
+
+    def doPolitk(self):
+        'bribe with money, political cap, or a rider bill'
+        politiks = 'money pc rider'.split(' ')
+        p = srandom.choice(politiks)
+        # TODO just testing
+        p = 'rider'
+        message = p + ' '
+        bribe = None
+        if p == 'money':
+            bribe = srandom.randint(1, 5) * abs(degree)
+            message += str(bribe)
+        elif p == 'pc':
+            bribe = srandom.randint(1, 5) * abs(degree)
+            message += str(bribe)
+        elif p == 'rider':
+            # TODO check bribe_topic:amount is not less in magnitude than bill
+            print self.programs['Discretionary'].keys()
+            bribe_topic = srandom.choice(self.programs['Discretionary'].keys())
+            bribe_amount = srandom.randint(1, 4) * abs(degree)
+            message += bribe_topic + ' with ' + str(bribe_amount)
+        else:
+            raise ValueError('not a valid political move')
+        answer = 'c'
+        while answer != 'y' and answer != 'n':
+            answer = raw_input('Spend ' + message + '? y/n\n> ')
+        
+        if answer == 'y':
+            if p == 'money' and self.darkmoney > bribe:
+                self.darkmoney -= bribe
+            elif p == 'pc' and self.politicalcapital > bribe:
+                self.politicalcapital -= bribe
+            elif p == 'rider':
+                if not self.senate.bill:
+                    self.senate.bill = {}
+                self.senate.bill[bribe_topic] = bribe_amount
+            else:
+                return False  # if can't do any of the following
+            return True
+        else:
+            return False
+    
+    def enactBill(self):
+        if self.senate.bill:
+            pass  # apply bill to action!
+        else:
+            print 'no bill to enact'
+
+    def askBillEntry(self):
+        topic = ''
+        while topic not in self.programs['Discretionary'].keys():
+            topic = raw_input('Enter topic to change: ')
+        degree = None
+        while not is_int():  # (-10 < degree < 10):
+            degree = int(raw_input('Enter how much to change: '))
+        return topic, degree
+
+    def craftBill(self):
+        self.bill = {}
+        # TODO add random chance of fixed topic
+        # up to 3 topics
+        for i in xrange(3):
+            topic, degree = askBillEntry()
+            while topic in self.senate.bill:
+                topic, degree = askBillEntry()
+                if topic == 'skip':
+                    return
+            self.senate.bill[topic] = degree
+
 
 if __name__ == '__main__':
-    citizens = []  # need citizens...
-    gov = Government('usa gov', 4000, citizens)
+    c = [Citizen(public=False) for i in xrange(100)]  # need citizens...
+    gov = Government('usa gov', budget=4000, citizens=c)
+    print gov
+    # per turn,
+    while True:
+        # craft bill & guage reactions
+        gov.craftBill()
+        # do politics
+            # propaganda, shift senator xor publics opinion
+        gov.doPolitics()
+        # vote for bill
+            # voting will cost political willpower
+            # ex. if voted for tech=5, unlikely to vote for tech=5 again
+        gov.voteBill()
+        # enact bill
+        gov.doMorePolitics()
+        # block bill enforcement (veto, law suit)
+        gov.enactBill()

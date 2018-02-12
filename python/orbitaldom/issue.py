@@ -56,11 +56,12 @@ class Citizen(Issue):
     def vote(self, issue):
         return self.opinion > self.threshold
 
-    def didVote(self, issue):
+    def didvote(self, issue):
         self.opinion = self.getOpinionOn(issue) 
         if self.public:
             return not srandom.randint(-10, 0) < self.opinion < srandom.randint(1, 10)
-        return True  # non public, ie senators, must always vote
+        else:
+            return not srandom.randint(-1, 0) < self.opinion < srandom.randint(1, 5)
 
 
 if __name__ == '__main__':

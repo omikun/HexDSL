@@ -230,6 +230,26 @@ for each region with hero, the player with max threat from (players with figures
 
 ## Civ like idea in modern setting
 
+    interesting decisions:
+        democracy:
+            craft bill, guage reaction (+/- 10%)
+                cost to guage reaction, political capital? 
+            voter apathy - preference magnitude before voting
+            vote threshold - pref mag to vote yes [-1,.9]
+            influence senators
+                bribery
+                scratch back
+                coercion
+        citizens welfare: impacts voter apathy
+            health
+            food
+            income/job
+            hate gov
+            party loyalty
+        country:
+            production capacity - partly affected by citizen productivity
+            research ability - multiplier on citizens?
+
     items: pc, fc, sc, tech, military,citizen, official, president 
 
     USA:
@@ -248,14 +268,14 @@ for each region with hero, the player with max threat from (players with figures
         tax = 3300  # annual in billions
         Discretionary:
             defense: 
-                military: 500
-                intelligence: 50
-                surveillance: 10
+                military: 500    +1 mil stat
+                intelligence: 50 +1 foreign intelligence
+                surveillance: 10 +1 spy, +1 terrorist detection
             Nondefense: 
-                agriculture: 25
-                space: 20
-                research: 30
-                healthcare: 50
+                agriculture: 25 +1 food
+                space: 20       +1 space colonization
+                research: 30    +1 tech, +1 productivity
+                healthcare: 50  -1 health costs
                 police: 180     -1 crime, +1 order
                 infrastructure: 120 +1 roads, +1 trust
                 borderProtection: 10    +1 trust, -1 immigration

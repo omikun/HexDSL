@@ -3,14 +3,18 @@ from issue import Issue, Citizen
 
 
 class Democracy:
-    'represents 1 layer of democracy, ie: public/poltician, politician/bill'
+    'a population voting on bills that affects their preferences'
     # TODO reduce number of 100% votes...
     def __init__(self, name, pop, public=True):
         self.name = name
         self.numpop = pop  # number of peeps voting for bills
+        self.topics = itbounds
         self.pop = [Citizen(itb=itbounds, public=public) for i in xrange(pop)]
         self.bill = None  # dict{ program: value change, }
         self.public = public
+
+    def __repr__(self):
+        return str(self.getPulse())
 
     def newBill(self, details=None):
         if details:
@@ -37,31 +41,36 @@ class Democracy:
             self.numvoted += 1
         return didVote
 
-    def voteBill(self):
+    def getPulse(self, topics=None):
+        if not topics:
+            topics = self.topics
+        prefs = {}
+        for t in topics:
+            tmin = min(cit.topics[t] for cit in self.pop)
+            tmax = max(cit.topics[t] for cit in self.pop)
+            tavg = sum(cit.topics[t] for cit in self.pop)/float(len(self.pop))
+            prefs[t] = [tavg, tmin, tmax]
+        return prefs
+
+    def voteBill(self, bill=None):
+        'takes a poll of how many in democracy population would and does vote for bill'
+        if bill:
+            self.bill = bill
         self.numvoted = 0
         votes = sum(cit.vote(self.bill) for cit in self.pop if self.countVote(cit.didvote(self.bill))) 
         # prefs = {topic:sum(cit.topics[topic] 
         #           for cit in self.pop)/float(len(self.pop)) 
         #               for topic in self.bill.topics }
-        prefs = {}
-        for t in self.bill.topics:
-            tmin = min(cit.topics[t] for cit in self.pop)
-            tmax = max(cit.topics[t] for cit in self.pop)
-            tavg = sum(cit.topics[t] for cit in self.pop)/float(len(self.pop))
-            prefs[t] = [tavg, tmin, tmax]
+        prefs = self.getPulse(self.bill)
         opinion = sum(cit.opinion for cit in self.pop) / float(len(self.pop))
         print 'avg pref: ', prefs, ' avg opinion: ', opinion
         print 'votes on bill ', votes, ' out of ', self.numvoted, ': ', votes/float(self.numvoted)
+        billPassed = None
         if self.public:
-            self.billPassed = votes * 2 >= self.numvoted
+            billPassed = votes * 2 >= self.numvoted
         else:
-            self.billPassed = votes * 2 >= self.numpop
-
-    def enactBill(self):
-        if not self.billPassed:
-            print 'bill not passed, bill not put into effect'
-            return None
-        return self.bill
+            billPassed = votes * 2 >= self.numpop
+        return billPassed
 
 if __name__ == '__main__':
     numPop = 100

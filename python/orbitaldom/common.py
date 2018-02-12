@@ -12,3 +12,11 @@ itbounds = {}
 for topic, scales in zip(issueTopics, itscales):
     bounds = ([int(a) for a in scales.split(',')])
     itbounds[topic] = bounds
+
+
+def is_int(n):
+    try:
+        int(n)
+        return True
+    except:
+        return False
