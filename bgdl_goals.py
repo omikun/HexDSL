@@ -243,9 +243,55 @@ for each region with hero, the player with max threat from (players with figures
         president: 1
         citizen: 100000000 # that votes
     
+    # where does the money come from?? taxes!
+    init conditions:
+        tax = 3300  # annual in billions
+        Discretionary:
+            defense: 
+                military: 500
+                intelligence: 50
+                surveillance: 10
+            Nondefense: 
+                agriculture: 25
+                space: 20
+                research: 30
+                healthcare: 50
+                police: 180     -1 crime, +1 order
+                infrastructure: 120 +1 roads, +1 trust
+                borderProtection: 10    +1 trust, -1 immigration
+                immigration: 5  +1 immigration, 2nd order effects
+        Mandatory:
+            # these grow in proportion to retirees, sick, debt
+            socialwelfare: 900  # medicaid/medicare
+            socialsecurity: 910
+            interest: 241
+            Other: 563
+
+
+    nationalTopics:  # how 1 unit of each affects citizens
+        # gov spends 1 unit money to gain 1 unit of the following,
+        # except for taxes, which gov gains for each unit
+        agriculture: +1 food, 
+        surveillance: -1 privacy, +1 security in 3 turn
+        immigration: +.1 security, -1 Immigrant
+        jobs:   +1 job, 
+        education: +1 job in 10 turn, +1 tech in 8 turn
+        healthcare: +1 health in 4 turn
+        Insurance: +1 money in 1 turn
+        taxes: -1 money in 4-7 turn 
+
+    immSelect:
+        pick from highest tech, highest job
+
+    Immigrant = citizen that another country pushes
+        for each country in countries   
+            where self.country.status > country.status
+                add country.citizens with happiness < threshold to immigrants
+        immigrant = immSelect immigrants
+
     citizen:
         # preferences
-        security:50, 
+        privacy:50, 
         immigration: 20, 
         jobs:70, 
         education: 10, 
