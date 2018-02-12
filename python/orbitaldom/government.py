@@ -93,7 +93,7 @@ class Government:
     
     def doPolitics(self):
         'influence senators in general or influence a particular senator'
-        topic, degree = askBillEntry()
+        topic, degree = self.askBillEntry()
         # how much would this cost? money? political capital? rider?
         if self.doPolitk(topic, degree):
             # take 2 most negative in topic and bump them by degree
@@ -102,11 +102,12 @@ class Government:
     def doMorePolitics(self):
         'could try to get bill vetoed'
         print "That's going to cost you "
+        topic, degree = self.askBillEntry()
         # do something special
-        if self.doPolitk():
+        if self.doPolitk(topic, degree):
             self.senate.bill = None
 
-    def doPolitk(self):
+    def doPolitk(self, topic, degree):
         'bribe with money, political cap, or a rider bill'
         politiks = 'money pc rider'.split(' ')
         p = srandom.choice(politiks)
@@ -158,7 +159,7 @@ class Government:
         while topic not in self.programs['Discretionary'].keys():
             topic = raw_input('Enter topic to change: ')
         degree = None
-        while not is_int():  # (-10 < degree < 10):
+        while not is_int(degree):  # (-10 < degree < 10):
             degree = int(raw_input('Enter how much to change: '))
         return topic, degree
 
@@ -166,13 +167,25 @@ class Government:
         self.bill = {}
         # TODO add random chance of fixed topic
         # up to 3 topics
-        for i in xrange(3):
-            topic, degree = askBillEntry()
-            while topic in self.senate.bill:
-                topic, degree = askBillEntry()
-                if topic == 'skip':
-                    return
-            self.senate.bill[topic] = degree
+        for i in xrange(1):
+            topic, degree = self.askBillEntry()
+            # while topic in self.bill:
+            #    topic, degree = self.askBillEntry()
+            #    if topic == 'skip':
+            #        return
+            self.bill[topic] = degree
+        # convert to senate sentiment bill
+        self.senate.bill = {}
+        for topic in self.bill:
+            for k, v in self.programs['Discretionary'][topic]['effect'].items():
+                print 'config file: ', k, v
+                if k in self.senate.bill:
+                    self.senate.bill[k] += v
+                else:
+                    self.senate.bill[k] = v
+        print 'senate bill: ', self.senate.bill
+
+
 
 
 if __name__ == '__main__':

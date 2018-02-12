@@ -334,6 +334,9 @@ for each region with hero, the player with max threat from (players with figures
         education: 10, 
         healthcare: 40, 
         tax: 80
+        trust: 4
+        food: 20
+        health: 40
     vote:
         choose random # biased by citizen preference criteria
     officials:

@@ -1,43 +1,58 @@
 Discretionary:
     military: 
         budget: 500
-        milstat: 1
+        effect:  # per billion spent on preferences
+            world_threat: 2
+            security: 1
+            immigration: .2
     intelligence: 
         budget: 50
-        spy: 2
+        effect:
+            spy: 2
+            privacy: -1
     surveillance:
         budget:  10 
-        spy: 1
-        findTerrorists: 1
+        effect:
+            spy: 1
+            privacy: -2  # snowden leak could bump this way high
+            terror_event: -1
     agriculture: 
         budget: 25
-        food: 2
+        effect:
+            food: 2
     space:
         budget:  20
-        space_colonization: 1
+        effect:
+            space_colonization: 1
     research: 
         budget:  30
-        tech: 1
-        productivity: 1
+        effect:
+            tech: 1
+            productivity: 1
     healthcare:
         budget: 50
-        health_costs: -1
+        effect:
+            health_costs: -1
     police: 
         budget: 180
-        crime: -1
-        order: 1
+        effect:
+            crime: -1
+            order: 1
     infrastructure:
         budget: 120
-        roads: 1
-        trust: 1
+        effect:
+            roads: 1
+            trust: 1
     borderProtection:
         budget: 10
-        trust: 1
-        immigration: -1
+        effect:
+            trust: 1
+            immigration: -1
     immigration:
         budget: 5
-        imigration: -1
-        second_order_effects: 2
+        effect:
+            imigration: -1
+            second_order_effects: 2
 Mandatory:
     # these grow in proportion to retirees, sick, debt
     socialwelfare:
