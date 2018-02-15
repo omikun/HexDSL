@@ -22,20 +22,28 @@ class Issue(object):
     def __repr__(self):
         return 'threshold: ' + str(self.threshold) + ' ' + str(self.topics)
 
-    def getOpinionOn(self, issue):
-        s = sum(self.topics[k] * v for k, v in issue.topics.items())
-        l = len(issue.topics)
+    def getOpinionOn(self, topics):
+        s = None
+        try:
+            s = sum(self.topics[k] * v for k, v in topics.items() if k in self.topics)
+            s += topics['bias']
+        except:
+            s = 0
+            print 'topics:', topics
+            print 'citizen:', self.topics
+            raise TypeError('wrong type in topics or something!')
+        l = len(topics)
         return s / float(l)
 
-    def vote(self, issue):
+    def vote(self, topics):
         'returns if opinion over threshold to vote for issue'
         # opinion from -100 to 100 against to for
         # NOTE: didvote must be called first!
         return self.opinion > self.threshold
     
-    def didvote(self, issue):
+    def didvote(self, topics):
         'simulates voter suppression or voter apathy'
-        self.opinion = self.getOpinionOn(issue) 
+        self.opinion = self.getOpinionOn(topics) 
         return not srandom.randint(-10, 0) < self.opinion < srandom.randint(1, 10)
 
 
