@@ -1,0 +1,21 @@
+digraph G {
+    node [shape=box]
+    mining, manufacturer, education, healthcare, energy, service, robotics, tech, recycler, food
+    node [shape=diamond]
+    industries, industry
+    node [shape=circle]
+
+    {oil_deposit, ore_deposit, rare_deposit} -> mining -> {ore, rare, oil} -> manufacturer
+    manufacturer -> {product, petro, exotic}
+    petro -> energy
+    product -> {citizens, tech, food}
+    education -> skill
+    healthcare -> health
+    oil -> energy -> industry
+    food -> citizens
+    tech -> industry
+    {energy, service, skill, health} -> citizens
+    {robotics, citizens} -> jobs -> industry
+    exotic -> {energy, robotics, manufacturer, tech, mining}
+    industries -> waste -> recycler -> ore
+}
