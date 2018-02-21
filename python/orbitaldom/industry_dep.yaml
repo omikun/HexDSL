@@ -1,6 +1,6 @@
 Drilling:
     stock:
-        oil_well: 100000
+        oil_well: 1000
         energy: 100
     oil:
         Input:
@@ -10,7 +10,7 @@ Drilling:
         Waste: 0
 Mining:
     stock:
-        ore: 100000
+        ore: 1000
         energy: 100
     metal:
         Input:
@@ -29,6 +29,16 @@ Manufacturer:
             petro: 1
             energy: 4
         Output: 2
+        Waste: 1
+Lab:
+    stock:
+        oil: 10
+        energy: 20
+    petro:
+        Input: 
+            oil: 4
+            energy: 1
+        Output: 6
         Waste: 1
 PowerPlant:
     stock:

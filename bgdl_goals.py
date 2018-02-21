@@ -240,6 +240,13 @@ for each region with hero, the player with max threat from (players with figures
                 bribery
                 scratch back
                 coercion
+                Detailed model: 
+                    get individual senators to vote for bill
+                        find easiest to turn senators (smallest negative opinion)
+                        calc influence cost on this senator
+                        force senator to vote yes
+                Simplified model:
+                    modify bill preference 
         citizens welfare: impacts voter apathy
             health
             food
