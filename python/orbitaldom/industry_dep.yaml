@@ -1,0 +1,40 @@
+Drilling:
+    stock:
+        oil_well: 100000
+        energy: 100
+    oil:
+        Input:
+            energy: 2
+            oil_well: 1
+        Output: 1
+        Waste: 0
+Mining:
+    stock:
+        ore: 100000
+        energy: 100
+    metal:
+        Input:
+            energy: 3
+            ore: 5
+        Output: 1
+        Waste: 0
+Manufacturer:
+    stock:
+        metal: 10
+        petro: 10
+        energy: 40
+    product:
+        Input:
+            metal: 2
+            petro: 1
+            energy: 4
+        Output: 2
+        Waste: 1
+PowerPlant:
+    stock:
+        petro: 10
+    energy:
+        Input:
+            petro: 1
+        Output: 10
+        Waste: 1
