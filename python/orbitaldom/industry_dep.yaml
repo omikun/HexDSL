@@ -1,50 +1,54 @@
-Drilling:
+Example:
     stock:
-        oil_well: 1000
-        energy: 100
+        oil_well: [amount, max, repl_rate]
+        energy: [amount, max, repl_rate]
     oil:
         Input:
-            energy: 2
-            oil_well: 1
-        Output: 1
-        Waste: 0
+            energy: [per_out, factor]
+            oil_well: [per_out, factor]
+        Output: [out_rate, waste_per_out]
+Drilling:
+    stock:
+        oil_well: [1000, 1000, 20]
+        energy: [100, 200, 20]
+    oil:
+        Input:
+            energy: [2, 1]
+            oil_well: [1, 1]
+        Output: [1, 0]
 Mining:
     stock:
-        ore: 1000
-        energy: 100
+        ore: [1000, 100, 10]
+        energy: [100, 200, 15]
     metal:
         Input:
-            energy: 3
-            ore: 5
-        Output: 1
-        Waste: 0
+            energy: [3, 1]
+            ore: [5, 1]
+        Output: [1, 2]
 Manufacturer:
     stock:
-        metal: 10
-        petro: 10
-        energy: 40
+        metal: [10, 20, 5]
+        petro: [10, 10, 5]
+        energy: [40, 40, 10]
     product:
         Input:
-            metal: 2
-            petro: 1
-            energy: 4
-        Output: 2
-        Waste: 1
+            metal: [2, 1]
+            petro: [1, 1]
+            energy: [4, 1]
+        Output: [2, 1]
 Lab:
     stock:
-        oil: 10
-        energy: 20
+        oil: [10, 10, 4]
+        energy: [20, 20, 10]
     petro:
         Input: 
-            oil: 4
-            energy: 1
-        Output: 6
-        Waste: 1
+            oil: [4, 1]
+            energy: [1, 1]
+        Output: [6, 1]
 PowerPlant:
     stock:
-        petro: 10
+        petro: [10, 10, 10]
     energy:
         Input:
-            petro: 1
-        Output: 10
-        Waste: 1
+            petro: [1, 1]
+        Output: [10, 1]

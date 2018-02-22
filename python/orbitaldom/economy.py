@@ -25,7 +25,7 @@ class Value:
         self.number += b
         return self
 
-    def takeOut(self, b):
+    def takeout(self, b):
         'takes at most amounb b from self'
         if isinstance(b, Value):
             b = b.number
@@ -37,17 +37,110 @@ class Value:
 
 class Industry:
     'a company that turns some resources into others'
-    def __init__(self, inputs, outputs):
-        self.inputs = inputs
-        self.outputs = outputs
+    def __init__(self, n, d):
+        self.d = d
+        self.name = n
+        self.stock = d['stock']
+        if len(d) > 2:
+            raise ValueError('cant handle more than 1 output')
+        out = None
+        for name, e in d.items():
+            if name == 'stock':
+                continue
+            out = e
+            self.output_name = name
+        self.input = out['Input']
+        self.output = out['Output']
+
+    def outputRate(self):
+        return self.output[0]
+
+    def waste(self):
+        return self.output[1]
+
+    def inRate(self, name):
+        # print 'inRate:', name, self.input
+        # print type(self.input[name][0])
+        return self.input[name][0]
+
+    def inFactor(self, name):
+        return self.input[name][1]
+
+    def addToStock(self, name, amount):
+        self.stock[name][0] += amount
+
+    def takeFromStock(self, name, amount):
+        self.stock[name][0] -= amount
+
+    def stockAmount(self, name):
+        # print 'stockAmount:', name, self.stock
+        return self.stock[name][0]
+    
+    def maxStock(self, name):
+        return self.stock[name][1]
+
+    def replStockRate(self, name):
+        'designated max rate of replenishing stock per turn'
+        return self.stock[name][2]
+
+    def replStockAmount(self, name):
+        'amount to replenish stock per turn'
+        to_fill = self.maxStock(name) - self.stockAmount(name)
+        to_fill = min(to_fill, self.stock[name][2])
+        return to_fill
+    
+    def getMaxOutput(self):
+        ret = min(self.stockAmount(n) // self.inRate(n) for n in self.input)
+        ret = max(0, ret)
+        # ret = min(ret, self.output_rate)
+        print self.name, 'can make', ret * self.outputRate(), self.output_name
+        print self.stock
+        return self.output_name, ret * self.outputRate()
+
+    def produce(self):
+        'get max output, consume equivalent inputs'
+        output, num_out = self.getMaxOutput()
+        for n in self.input:
+            self.takeFromStock(n, self.inRate(n))
+        waste = self.waste() * num_out
+        return output, num_out, waste
+
+    def replenishStock(self, common):
+        for name, e in self.stock.items():
+            if name not in common or name not in self.input:
+                continue
+            to_fill = self.replStockAmount(name)
+            self.addToStock(name, common[name].takeout(to_fill))
 
 if __name__ == '__main__':
-    industries = None
+    config = None
+    industries = {}
     with open('industry_dep.yaml') as f:
-        industries = yaml.load(f)
-        print industries
+        config = yaml.load(f)
+        print config
+        for name, ind in config.items():
+            if name == 'Example':
+                continue
+            industries[name] = Industry(name, ind)
     # ore is free
     common = {'Waste': Value('waste', 0)}
+    while True:
+        for name, ind in industries.items():
+            output_name, output, waste = ind.produce()
+            ind.replenishStock(common)
+            common['Waste'] += waste
+            if output_name not in common:
+                common[output_name] = Value(output_name, 0)
+            print output_name, 'added ', output
+            common[output_name] += output
+        for thing, num in common.items():
+            print thing, ': ', num
+        raw = raw_input('enter something: ')
+
+
+def obsolete():
+    common = {'Waste': Value('waste', 0)}
+    industries = {}
     while True:  # each turn
         for n_ind, ind in industries.items():
             print n_ind + ':'
@@ -72,13 +165,14 @@ if __name__ == '__main__':
                     if stock[n_in] < max_output * amount:
                         raise ValueError(str(n_in, stock[n_in], '<', max_output, '*', amount))
                     stock[n_in] -= max_output * amount
+
             # get more stock from common store
             for n_in, amount in stock.items():
                 if n_in not in common:
                     continue
                 # say max stock of 100
                 need_fill = max(0, 10 - amount)
-                stock[n_in] += common[n_in].takeOut(need_fill)
+                stock[n_in] += common[n_in].takeout(need_fill)
         for thing, num in common.items():
             print thing, ': ', num
         raw = raw_input('enter something: ')
