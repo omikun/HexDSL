@@ -1,5 +1,6 @@
 'models a rough economy'
 import yaml
+import math
 
 range = xrange
 # basic system of industries being producer/consumers
@@ -12,7 +13,7 @@ class Value:
         self.name = s
 
     def __repr__(self):
-        return str(self.number)
+        return str('%.2f' % self.number)
 
     def __add__(self, b):
         if isinstance(b, Value):
@@ -36,7 +37,7 @@ class Value:
 
 
 class Industry:
-    'a company that turns some resources into others'
+    'a company that turns some resources into one output resource'
     def __init__(self, n, d):
         self.d = d
         self.name = n
@@ -51,6 +52,9 @@ class Industry:
             self.output_name = name
         self.input = out['Input']
         self.output = out['Output']
+        self.logic = None
+        if 'Logic' in out:
+            self.logic = out['Logic']
 
     def outputRate(self):
         return self.output[0]
@@ -92,16 +96,37 @@ class Industry:
     def getMaxOutput(self):
         ret = min(self.stockAmount(n) // self.inRate(n) for n in self.input)
         ret = max(0, ret)
+        ret = min(ret, self.outputRate)
         # ret = min(ret, self.output_rate)
-        print self.name, 'can make', ret * self.outputRate(), self.output_name
+        print self.name, 'can make', ret, self.output_name
         print self.stock
-        return self.output_name, ret * self.outputRate()
+        ret *= self.getOutputFraction()
+        return self.output_name, ret
+
+    def getOutputFraction(self):
+        'compute fraction of max output w/ logic'
+        if self.logic:
+            fraction = 0
+            x = self.logic[0]
+            x = self.stockAmount(x) / float(self.maxStock(x))
+            statement = ''
+            for i, l in enumerate(self.logic):
+                if i == 0:
+                    continue
+                if l == 'log':
+                    fraction = eval('math.log(x)')
+                else:
+                    fraction = eval('fraction' + str(l))
+            print 'logicing~~~~~~~ %.2f %.2f' % (x, fraction) 
+            return fraction
+        else:
+            return 1
 
     def produce(self):
         'get max output, consume equivalent inputs'
         output, num_out = self.getMaxOutput()
         for n in self.input:
-            self.takeFromStock(n, self.inRate(n))
+            self.takeFromStock(n, self.inRate(n) * num_out)
         waste = self.waste() * num_out
         return output, num_out, waste
 
@@ -131,10 +156,10 @@ if __name__ == '__main__':
             common['Waste'] += waste
             if output_name not in common:
                 common[output_name] = Value(output_name, 0)
-            print output_name, 'added ', output
+            print '%s added %.2f' % (output_name, output)
             common[output_name] += output
         for thing, num in common.items():
-            print thing, ': ', num
+            print '%s: %s' % (thing, num)
         raw = raw_input('enter something: ')
 
 

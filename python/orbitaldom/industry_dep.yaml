@@ -4,18 +4,25 @@ Example:
         energy: [amount, max, repl_rate]
     oil:
         Input:
-            energy: [per_out, factor]
+        # input consumed per turn = actual_output_rate * unit_per_out
+            energy: [unit_per_out, factor]
             oil_well: [per_out, factor]
         Output: [out_rate, waste_per_out]
+        # out_rate is # of units that could be produced per turn
+        Logic: [variable, operator, operator,...]
+        # logic takes the fraction of max of stock[variable], applies operators on it one at a time, order of operation is always left to right, no pimdas
+        # produces a fraction [0, 1]
+        # actual_output_rate = frac * out_rate
 Drilling:
     stock:
         oil_well: [1000, 1000, 20]
-        energy: [100, 200, 20]
+        energy: [100, 200, 40]
     oil:
         Input:
             energy: [2, 1]
             oil_well: [1, 1]
-        Output: [1, 0]
+        Output: [20, 0]
+        Logic: [oil_well, log, '+10', '/10']
 Mining:
     stock:
         ore: [1000, 100, 10]
@@ -24,7 +31,7 @@ Mining:
         Input:
             energy: [3, 1]
             ore: [5, 1]
-        Output: [1, 2]
+        Output: [10, 2]
 Manufacturer:
     stock:
         metal: [10, 20, 5]
@@ -35,10 +42,10 @@ Manufacturer:
             metal: [2, 1]
             petro: [1, 1]
             energy: [4, 1]
-        Output: [2, 1]
+        Output: [10, 1]
 Lab:
     stock:
-        oil: [10, 10, 4]
+        oil: [10, 100, 40]
         energy: [20, 20, 10]
     petro:
         Input: 
@@ -47,8 +54,8 @@ Lab:
         Output: [6, 1]
 PowerPlant:
     stock:
-        petro: [10, 10, 10]
+        petro: [10, 10, 20]
     energy:
         Input:
-            petro: [1, 1]
-        Output: [10, 1]
+            petro: [.01, 1]
+        Output: [1000, 1]
