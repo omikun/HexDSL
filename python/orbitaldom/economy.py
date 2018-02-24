@@ -96,31 +96,23 @@ class Industry:
     def getMaxOutput(self):
         ret = min(self.stockAmount(n) // self.inRate(n) for n in self.input)
         ret = max(0, ret)
-        ret = min(ret, self.outputRate)
+        ret = min(ret, self.outputRate())
+        ret *= max(0, min(1, self.getOutputFraction()))
         # ret = min(ret, self.output_rate)
         print self.name, 'can make', ret, self.output_name
         print self.stock
-        ret *= self.getOutputFraction()
         return self.output_name, ret
 
     def getOutputFraction(self):
         'compute fraction of max output w/ logic'
-        if self.logic:
-            fraction = 0
-            x = self.logic[0]
-            x = self.stockAmount(x) / float(self.maxStock(x))
-            statement = ''
-            for i, l in enumerate(self.logic):
-                if i == 0:
-                    continue
-                if l == 'log':
-                    fraction = eval('math.log(x)')
-                else:
-                    fraction = eval('fraction' + str(l))
-            print 'logicing~~~~~~~ %.2f %.2f' % (x, fraction) 
-            return fraction
-        else:
+        if not self.logic:
             return 1
+        x = self.logic[0]
+        x = self.stockAmount(x) / float(self.maxStock(x))
+        fraction = eval(self.logic[1])
+        fraction = round(fraction, 2)
+        print 'logicing~~~~~~~ %.2f %.2f' % (x, fraction) 
+        return fraction
 
     def produce(self):
         'get max output, consume equivalent inputs'
@@ -161,44 +153,3 @@ if __name__ == '__main__':
         for thing, num in common.items():
             print '%s: %s' % (thing, num)
         raw = raw_input('enter something: ')
-
-
-def obsolete():
-    common = {'Waste': Value('waste', 0)}
-    industries = {}
-    while True:  # each turn
-        for n_ind, ind in industries.items():
-            print n_ind + ':'
-            # determine max output from stock
-            stock = ind['stock']
-            max_output = 0
-            print 'stock:', stock
-            for n_out, output in ind.items():
-                if n_out == 'stock':
-                    continue
-                max_output = min(stock[n_in] // amount
-                                 for n_in, amount in output['Input'].items())
-                max_output = max(0, max_output)
-                print n_ind, 'can make', max_output * output['Output'], n_out
-                common['Waste'] += output['Waste'] * max_output
-                if n_out not in common:
-                    common[n_out] = Value(n_out, 0)
-                common[n_out] += max_output * output['Output']
-                # print 'Adding to common:', n_out, max_output * output['Output']
-                # get consume stock, produce to common store
-                for n_in, amount in output['Input'].items():
-                    if stock[n_in] < max_output * amount:
-                        raise ValueError(str(n_in, stock[n_in], '<', max_output, '*', amount))
-                    stock[n_in] -= max_output * amount
-
-            # get more stock from common store
-            for n_in, amount in stock.items():
-                if n_in not in common:
-                    continue
-                # say max stock of 100
-                need_fill = max(0, 10 - amount)
-                stock[n_in] += common[n_in].takeout(need_fill)
-        for thing, num in common.items():
-            print thing, ': ', num
-        raw = raw_input('enter something: ')
-    # print common store
