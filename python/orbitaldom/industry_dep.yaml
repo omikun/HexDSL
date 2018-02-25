@@ -7,9 +7,11 @@ Example:
         # input consumed per turn = actual_output_rate * unit_per_out
             energy: [unit_per_out, factor]
             oil_well: [per_out, factor]
-        Output: [out_rate, waste_per_out]
+        Output: [out_rate, cost_per_out]
         # out_rate is # of units that could be produced per turn
-        Logic: [variable, operator, operator,...]
+        Out_coef: [variable, 'func(x) * weight + offset']
+        Waste: [unit_per_out, cost_per_out]
+        Waste_coef: [variable, 'func(x) * weight...']
         # logic takes the fraction of max of stock[variable], applies operators on it one at a time, order of operation is always left to right, no pimdas
         # produces a fraction [0, 1]
         # actual_output_rate = frac * out_rate
@@ -17,47 +19,57 @@ Drilling:
     stock:
         oil_well: [1000, 1000, 20]
         energy: [100, 200, 40]
+        dollar: [100, 100, 0]
     oil:
         Input:
             energy: [2, 1]
             oil_well: [1, 1]
-        Output: [20, 0]
-        Logic: ['oil_well', '1 / (1 + math.exp(-(x*5-1)))']
+        Output: [20, 1]
+        Waste: [1, 0]
+        Logic: ['oil_well', '1 / (1 + math.exp(-x*12+6))']
         #Logic: ['oil_well', '(math.log(x*.1)+10)/10']
                 #'oil_well', '*.1, log, +10, /10',]
 Mining:
     stock:
-        ore: [1000, 100, 10]
+        ore: [10000, 1000, 10]
         energy: [100, 200, 15]
+        dollar: [100, 100, 0]
     metal:
         Input:
             energy: [3, 1]
             ore: [5, 1]
         Output: [10, 2]
+        Waste: [2, 0]
 Manufacturer:
     stock:
         metal: [10, 20, 5]
         petro: [10, 10, 5]
         energy: [40, 40, 10]
+        dollar: [100, 100, 0]
     product:
         Input:
             metal: [2, 1]
             petro: [1, 1]
             energy: [4, 1]
-        Output: [10, 1]
+        Output: [10, 5]
+        Waste: [2, 0]
 Lab:
     stock:
         oil: [10, 100, 40]
         energy: [20, 20, 10]
+        dollar: [100, 100, 0]
     petro:
         Input: 
             oil: [4, 1]
             energy: [1, 1]
         Output: [6, 1]
+        Waste: [1, 0]
 PowerPlant:
     stock:
         petro: [10, 10, 20]
+        dollar: [100, 100, 0]
     energy:
         Input:
             petro: [.01, 1]
-        Output: [100, 1]
+        Output: [100, .1]
+        Waste: [.01, 0]

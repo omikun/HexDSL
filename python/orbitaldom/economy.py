@@ -40,6 +40,7 @@ class Industry:
     'a company that turns some resources into one output resource'
     def __init__(self, n, d):
         self.d = d
+        self.market = None
         self.name = n
         self.stock = d['stock']
         if len(d) > 2:
@@ -52,6 +53,7 @@ class Industry:
             self.output_name = name
         self.input = out['Input']
         self.output = out['Output']
+        self.waste = out['Waste']
         self.logic = None
         if 'Logic' in out:
             self.logic = out['Logic']
@@ -60,6 +62,9 @@ class Industry:
         return self.output[0]
 
     def waste(self):
+        return self.waste[0]
+
+    def price(self):
         return self.output[1]
 
     def inRate(self, name):
@@ -119,15 +124,35 @@ class Industry:
         output, num_out = self.getMaxOutput()
         for n in self.input:
             self.takeFromStock(n, self.inRate(n) * num_out)
-        waste = self.waste() * num_out
-        return output, num_out, waste
+        price = self.price() * num_out
+        self.addToStock('dollar', price)
+        return output, num_out, price
 
     def replenishStock(self, common):
         for name, e in self.stock.items():
             if name not in common or name not in self.input:
                 continue
             to_fill = self.replStockAmount(name)
+            # make sure there's enough money for it
+            can_afford = self.stockAmount('dollar') / self.market[name]
+            print 'can afford: ', can_afford, name
+            to_fill = min(to_fill, can_afford)
             self.addToStock(name, common[name].takeout(to_fill))
+            self.takeFromStock('dollar', to_fill * self.market[name])
+
+def writeIndustryCycleDot(industries):
+    def arrow(first, second):
+        return '\n' + first + ' -> ' + second
+
+    out = 'digraph G {'
+    for ind_name, ind in industries.items():
+        out += '\n' + ind_name + ' [shape=box]'
+        out += arrow(ind_name, ind.output_name)
+        for in_name, inList in ind.input.items():
+            out += arrow(in_name, ind.name)
+    out += '\n}'
+    with open('ind_dep.dot', 'w') as f:
+        f.write(out)
 
 if __name__ == '__main__':
     config = None
@@ -139,8 +164,17 @@ if __name__ == '__main__':
             if name == 'Example':
                 continue
             industries[name] = Industry(name, ind)
-    # ore is free
+
+    # writeIndustryCycleDot(industries)
+
+    # mines gets pre-existing ore, drilling gets wells
     common = {'Waste': Value('waste', 0)}
+    # initialize commodities w/ cost from industries
+    market = {}  # need price and total worth in commodity
+    for ind in industries.values():
+        market[ind.output_name] = ind.price()
+        ind.market = market
+
     while True:
         for name, ind in industries.items():
             output_name, output, waste = ind.produce()
