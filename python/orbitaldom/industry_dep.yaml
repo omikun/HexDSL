@@ -1,7 +1,9 @@
 Example:
     stock:
-        oil_well: [amount, max, repl_rate]
-        energy: [amount, max, repl_rate]
+        oil_well: [amount, min, max, repl_rate]
+        # max, min are pref thresholds, 
+        # repl_rate is replenish rate
+        energy: [amount, min, max, repl_rate]
     oil:
         Input:
         # input consumed per turn = actual_output_rate * unit_per_out
@@ -11,15 +13,15 @@ Example:
         # out_rate is # of units that could be produced per turn
         Out_coef: [variable, 'func(x) * weight + offset']
         Waste: [unit_per_out, cost_per_out]
-        Waste_coef: [variable, 'func(x) * weight...']
+        # Waste_coef: [variable, 'func(x) * weight...']
         # logic takes the fraction of max of stock[variable], applies operators on it one at a time, order of operation is always left to right, no pimdas
         # produces a fraction [0, 1]
         # actual_output_rate = frac * out_rate
 Drilling:
     stock:
-        oil_well: [1000, 1000, 20]
-        energy: [100, 200, 40]
-        dollar: [100, 100, 0]
+        oil_well: [1000, 0, 1000, 20]
+        energy: [100, 50, 200, 40]
+        dollar: [100, 0, 100, 0]
     oil:
         Input:
             energy: [2, 1]
@@ -31,9 +33,9 @@ Drilling:
                 #'oil_well', '*.1, log, +10, /10',]
 Mining:
     stock:
-        ore: [10000, 1000, 10]
-        energy: [100, 200, 15]
-        dollar: [100, 100, 0]
+        ore: [10000, 0, 1000, 0]
+        energy: [100, 10, 200, 15]
+        dollar: [100, 0, 100, 0]
     metal:
         Input:
             energy: [3, 1]
@@ -42,10 +44,10 @@ Mining:
         Waste: [2, 0]
 Manufacturer:
     stock:
-        metal: [10, 20, 5]
-        petro: [10, 10, 5]
-        energy: [40, 40, 10]
-        dollar: [100, 100, 0]
+        metal: [10, 2, 20, 5]
+        petro: [10, 2, 10, 5]
+        energy: [40, 10, 40, 10]
+        dollar: [100, 0, 100, 0]
     product:
         Input:
             metal: [2, 1]
@@ -55,9 +57,9 @@ Manufacturer:
         Waste: [2, 0]
 Lab:
     stock:
-        oil: [10, 100, 40]
-        energy: [20, 20, 10]
-        dollar: [100, 100, 0]
+        oil: [10, 5, 100, 40]
+        energy: [20, 5, 20, 10]
+        dollar: [100, 0, 100, 0]
     petro:
         Input: 
             oil: [4, 1]
@@ -66,8 +68,8 @@ Lab:
         Waste: [1, 0]
 PowerPlant:
     stock:
-        petro: [10, 10, 20]
-        dollar: [100, 100, 0]
+        petro: [10, 2, 10, 20]
+        dollar: [100, 0, 100, 0]
     energy:
         Input:
             petro: [.01, 1]
