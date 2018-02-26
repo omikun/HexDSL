@@ -27,4 +27,4 @@ class Scheduler:
     def addRecurring(self, startTime, everyTime, func, args):
         ast = startTime+self.turn  # abs start time
         self.events.insert(Event(ast, func, args))
-        self.events.insert(Event(ast+everyTime, addRecurring, ))
+        self.events.insert(Event(ast+everyTime, addRecurring, None))
