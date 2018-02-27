@@ -103,6 +103,8 @@ class Industry:
         self.stock[name][0] += amount
 
     def takeFromStock(self, name, amount):
+        if self.stock[name][0] < amount:
+            raise ValueError('trying to take more than in stock '+name)
         self.stock[name][0] -= amount
 
     def stockAmount(self, name):
