@@ -1,5 +1,5 @@
-'''Market allows traders to park inventory and 
-    buyers a common interface to access goods
+'''Market allows traders to park inventory and allow
+    buyers to access goods over a common interface
 '''
 
 from SortedCollection import *
@@ -61,42 +61,52 @@ class Market:
         for ask in self.sellers[name]:  # assumes starting w/ cheapest asks
             if bid.amount == 0:
                 break
+            print ask
             seller = ask.trader
             unit_price = ask.unit_price
             # get amount that can be bought at ask price
             bid_amount = min(bid.amount, can_pay / unit_price)  # num units
+            bid_amount = min(bid_amount, ask.amount)
             bid_price = bid_amount * unit_price
             amount = min(bid_amount, ask.amount)
-            print 'bought ', name, 'at $', bid_price, ' per unit for ', bid_amount, 'units'
+            print 'bought ', name, 'at $', bid_price, ' for ', bid_amount, 'units from ', seller.id
             # transfer amount from com to bid.trader
             buyer.addToStock(name, amount)
             seller.takeFromStock(name, amount)
+            bid.amount -= bid_amount
+            ask.amount -= bid_amount
             # transfer dollars
             seller.addToStock('dollar', bid_price)
             buyer.takeFromStock('dollar', bid_price)
             can_pay -= bid_price
-            if seller.stockAmount(name) == 0:
-                self.sellers.remove(ask)
+            if ask.amount == 0:
+                print 'removed', ask
+                self.sellers[name].remove(ask)
         # if return false, then demand > supply
         return bid.amount == 0
+
 
 class Industry:
     def __init__(self, id, cash, stock):
         self.id = id
         self.cash = cash
         self.stock = stock
+    
     def stockAmount(self, name):
         if name == 'dollar':
             return self.cash
         else:
             return self.stock
+    
     def addToStock(self, name, amount):
         if name == 'dollar':
             self.cash += amount
         else:
             self.stock += amount
+    
     def takeFromStock(self, name, amount):
         self.addToStock(name, -amount)
+    
     def __repr__(self):
         return 'trader: %d, $%.2f %.2f unit' % (self.id, self.cash, self.stock)
 
