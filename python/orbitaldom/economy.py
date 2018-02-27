@@ -9,7 +9,7 @@ range = xrange
 class Value:
     'tracks market price and quantity?'
     '''
-    market is a dumping ground of all outputs, combined, with avg cost
+    market is a dumping ground of all outputs, combined, 
         if each industry sells to the market, we can treat the market as a bank of money/commodities stores
             industry sells n outputs to market for m dollars
                 industry.stock[output] -= n
@@ -19,8 +19,8 @@ class Value:
             buyers then must buy output at total dollars/total amount
         but this decouples producers from demand
             must build a backpressure into this, when demand dwindles, suppliers don't get their money
-        industry transfers to market, where all outputs are pooled into ask pairs:
-            (per unit price, quantity)
+        industry transfers to market, where all outputs are pooled into ask entries:
+            (per unit price, quantity, seller)
         buyers then submit bids (total amount)
         buyers with highest bids gets cheapest products first at asking price
     '''
@@ -103,8 +103,6 @@ class Industry:
         self.stock[name][0] += amount
 
     def takeFromStock(self, name, amount):
-        if self.stock[name][0] < amount:
-            raise ValueError('trying to take more than in stock '+name)
         self.stock[name][0] -= amount
 
     def stockAmount(self, name):
