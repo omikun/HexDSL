@@ -88,6 +88,13 @@ class Industry:
     def wastePrice(self):
         return self.waste_[1]
 
+    def pricePerOutput(self):
+        'TODO compute cost of inputs + profit per unit output'
+        cost_per_output = 0
+        for name, good in self.input_.items():
+            cost_per_output += self.priceOfStockUnit(name) * self.inRate(name)
+        return cost_per_output
+    
     def price(self):
         return self.output_[1]
 
@@ -99,11 +106,16 @@ class Industry:
     def inFactor(self, name):
         return self.input_[name][1]
 
-    def addToStock(self, name, amount):
+    def addToStock(self, name, amount, cost=None):
         self.stock[name][0] += amount
+        if cost:
+            self.addToStockCost(name, cost)
+    
+    def takeFromStock(self, name, amount, cost):
+        self.addToStock(self, name, -amount, -cost)
 
-    def takeFromStock(self, name, amount):
-        self.stock[name][0] -= amount
+    def priceOfStockUnit(self, name):
+        return self.stockCost(name) / float(self.stockAmount(name))
 
     def stockAmount(self, name):
         # print 'stockAmount:', name, self.stock
@@ -118,6 +130,16 @@ class Industry:
     def replStockRate(self, name):
         'designated max rate of replenishing stock per turn'
         return self.stock[name][3]
+
+    def stockCost(self, name):
+        'cumulative cost of everything in stock'
+        return self.stock[name][4]
+
+    def addToStockCost(self, name, amount):
+        self.stock[name][4] += amount
+
+    def subStockCost(self, name, amount):
+        self.subStockCost(name, -amount)
 
     def replStockAmount(self, name):
         'amount to replenish stock per turn'
@@ -146,14 +168,18 @@ class Industry:
         print 'logicing~~~~~~~ %.2f %.2f' % (x, fraction) 
         return fraction
 
+    #### modifies actual data
     def produce(self):
         'get max output, consume equivalent inputs'
         output, num_out = self.getMaxOutput()
+        total_cost = 0
         for n in self.input_:
-            self.takeFromStock(n, self.inRate(n) * num_out)
-        price = self.price() * num_out
-        self.addToStock('dollar', price)
-        return output, num_out, price, waste
+            input_cost = self.pricePerOutput * num_out
+            total_cost += input_cost
+            num_inputs = self.inRate(n) * num_out
+            self.takeFromStock(n, num_inputs, input_cost)
+        profit = 1
+        return output, num_out, total_cost+profit
 
     def replenishStock(self, market):
         for name, e in self.stock.items():
