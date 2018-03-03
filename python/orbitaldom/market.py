@@ -1,245 +1,133 @@
-'models a rough economy'
-import yaml
-import math
+'''Market allows traders to park inventory and allow
+    bids to access goods over a common interface
+'''
 
-range = xrange
-# basic system of industries being producer/consumers
+from SortedCollection import *
 
 
-class Value:
-    'tracks market price and quantity?'
-    '''
-    market is a dumping ground of all outputs, combined, 
-        if each industry sells to the market, we can treat the market as a bank of money/commodities stores
-            industry sells n outputs to market for m dollars
-                industry.stock[output] -= n
-                industry.stock[dollar] += m
-                market.stock[output] += n
-                market.stock[dollar] -= n
-            buyers then must buy output at total dollars/total amount
-        but this decouples producers from demand
-            must build a backpressure into this, when demand dwindles, suppliers don't get their money
-        industry transfers to market, where all outputs are pooled into ask entries:
-            (per unit price, quantity, seller)
-        buyers then submit bids (total amount)
-        buyers with highest bids gets cheapest products first at asking price
-    '''
-    def __init__(self, s):
-        self.number = 0
-        self.net = 0
-        self.name = s
+class Trade:
+    def __init__(self, commodity, unit_price, amount, trader):
+        'params are float, float, Industry'
+        self.unit_price = unit_price
+        self.amount = amount
+        self.trader = trader
+        self.name = commodity
 
     def __repr__(self):
-        return str('%.2f' % self.number)
+        return '%s selling %f %s at $%f/unit' % (self.trader.id, self.amount, self.name, self.unit_price)
+    
 
-    def __add__(self, b):
-        if isinstance(b, Value):
-            b = b.number
-        return self.number + b
+class Market:
+    def __init__(self):
+        self.asks = {}
+        self.bids = {}
+        # commodities are dictionaries key=good
+        # each entry is an array of asks ordered by unit price
 
-    def __iadd__(self, b):
-        if isinstance(b, Value):
-            b = b.number
-        elif isinstance(b, tuple):
-            price = b[1]  # assumes price is worth of quantity added
-            self.net += price  # need to add price to all operations
-            b = b[0]
-        self.number += b
-        return self
+    def addToSell(self, ask):
+        'add ask to asks'
+        self.addToMarket(ask, self.asks)
 
-    def takeout(self, b):
-        'takes at most amounb b from self'
-        if isinstance(b, Value):
-            b = b.number
-        amount = max(0, min(self.number, b))
-        # print 'SUBTRACTING!!!!!!!!', self.name, 'num: ', self.number, '-', amount, '=', 
-        self.number -= amount
-        return amount
+    def addToBuy(self, bid):
+        'add bid to bids'
+        self.addToMarket(bid, self.bids)
+
+    def addToMarket(self, trade, traders):
+        'add trade, merge same trader/price asks'
+        traders.setdefault(trade.name, 
+                            SortedCollection([], key=lambda x: x.unit_price))
+        # search through and check if same price/trader
+        for iter in traders[trade.name]:
+            if iter.unit_price == trade.unit_price and \
+            iter.trader == trade.trader:
+                iter.amount += trade.amount
+                break
+        else:
+            traders[trade.name].insert(trade)
+
+    def tick(self):
+        'commence trade between bids and asks'
+        # take bids with highest bids
+        for good, bids in self.bids.items():
+            for bid in reversed(bids):
+                print 'biding', bid
+                self.buy(bid)
+
+    def buy(self, bid):
+        'searches for cheapest bid, transfer assets, return if successful'
+        name = bid.name
+        buyer = bid.trader
+        can_pay = bid.unit_price * bid.amount
+        for ask in self.asks[name]:  # assumes starting w/ cheapest asks
+            if bid.amount == 0:
+                break
+            print ask
+            seller = ask.trader
+            unit_price = ask.unit_price
+            # get amount that can be bought at ask price
+            bid_amount = min(bid.amount, can_pay / unit_price)  # num units
+            bid_amount = min(bid_amount, ask.amount)
+            bid_price = bid_amount * unit_price
+            amount = min(bid_amount, ask.amount)
+            print 'bought ', name, 'at $', bid_price, ' for ', bid_amount, 'units from ', seller.id
+            # transfer amount from com to bid.trader
+            buyer.addToStock(name, amount)
+            seller.takeFromStock(name, amount)
+            bid.amount -= bid_amount
+            ask.amount -= bid_amount
+            # transfer dollars
+            seller.addToStock('dollar', bid_price)
+            buyer.takeFromStock('dollar', bid_price)
+            can_pay -= bid_price
+            if ask.amount == 0:
+                print 'removed', ask
+                self.asks[name].remove(ask)
+        # if return false, then demand > supply
+        return bid.amount == 0
 
 
 class Industry:
-    'a company that turns some resources into one output resource'
-    def __init__(self, n, d):
-        self.d = d
-        self.market = None
-        self.name = n
-        self.stock = d['stock']
-        if len(d) > 2:
-            raise ValueError('cant handle more than 1 output')
-        out = None
-        for name, e in d.items():
-            if name == 'stock':
-                continue
-            out = e
-            self.output_name = name
-        self.input_ = out['Input']
-        self.output_ = out['Output']
-        self.waste_ = out['Waste']
-        self.logic = None
-        if 'Logic' in out:
-            self.logic = out['Logic']
-
-    def outputRate(self):
-        return self.output_[0]
-
-    def waste(self):
-        return self.waste_[0]
-
-    def wastePrice(self):
-        return self.waste_[1]
-
-    def pricePerOutput(self):
-        'TODO compute cost of inputs + profit per unit output'
-        cost_per_output = 0
-        for name, good in self.input_.items():
-            cost_per_output += self.priceOfStockUnit(name) * self.inRate(name)
-        return cost_per_output
+    def __init__(self, id, cash, stock):
+        self.id = id
+        self.cash = cash
+        self.stock = stock
     
-    def price(self):
-        return self.output_[1]
-
-    def inRate(self, name):
-        # print 'inRate:', name, self.input
-        # print type(self.input[name][0])
-        return self.input_[name][0]
-
-    def inFactor(self, name):
-        return self.input_[name][1]
-
-    def addToStock(self, name, amount, cost=None):
-        self.stock[name][0] += amount
-        if cost:
-            self.addToStockCost(name, cost)
-    
-    def takeFromStock(self, name, amount, cost):
-        self.addToStock(self, name, -amount, -cost)
-
-    def priceOfStockUnit(self, name):
-        return self.stockCost(name) / float(self.stockAmount(name))
-
     def stockAmount(self, name):
-        # print 'stockAmount:', name, self.stock
-        return self.stock[name][0]
+        if name == 'dollar':
+            return self.cash
+        else:
+            return self.stock
     
-    def minStock(self, name):
-        return self.stock[name][1]
-
-    def maxStock(self, name):
-        return self.stock[name][2]
-
-    def replStockRate(self, name):
-        'designated max rate of replenishing stock per turn'
-        return self.stock[name][3]
-
-    def stockCost(self, name):
-        'cumulative cost of everything in stock'
-        return self.stock[name][4]
-
-    def addToStockCost(self, name, amount):
-        self.stock[name][4] += amount
-
-    def subStockCost(self, name, amount):
-        self.subStockCost(name, -amount)
-
-    def replStockAmount(self, name):
-        'amount to replenish stock per turn'
-        to_fill = self.maxStock(name) - self.stockAmount(name)
-        to_fill = min(to_fill, self.replStockRate(name))
-        return to_fill
+    def addToStock(self, name, amount):
+        if name == 'dollar':
+            self.cash += amount
+        else:
+            self.stock += amount
     
-    def getMaxOutput(self):
-        ret = min(self.stockAmount(n) // self.inRate(n) for n in self.input_)
-        ret = max(0, ret)
-        ret = min(ret, self.outputRate())
-        ret *= max(0, min(1, self.getOutputFraction()))
-        # ret = min(ret, self.output_rate)
-        print self.name, 'can make', ret, self.output_name
-        print self.stock
-        return self.output_name, ret
-
-    def getOutputFraction(self):
-        'compute fraction of max output w/ logic'
-        if not self.logic:
-            return 1
-        x = self.logic[0]
-        x = self.stockAmount(x) / float(self.maxStock(x))
-        fraction = eval(self.logic[1])
-        fraction = round(fraction, 2)
-        print 'logicing~~~~~~~ %.2f %.2f' % (x, fraction) 
-        return fraction
-
-    #### modifies actual data
-    def produce(self):
-        'get max output, consume equivalent inputs'
-        output, num_out = self.getMaxOutput()
-        total_cost = 0
-        for n in self.input_:
-            input_cost = self.pricePerOutput * num_out
-            total_cost += input_cost
-            num_inputs = self.inRate(n) * num_out
-            self.takeFromStock(n, num_inputs, input_cost)
-        profit = 1
-        return output, num_out, total_cost+profit
-
-    def replenishStock(self, market):
-        for name, e in self.stock.items():
-            if name not in market or name not in self.input_:
-                continue
-            to_fill = self.replStockAmount(name)
-            if to_fill == 0:
-                continue
-            # make sure there's enough money for it
-            can_afford = self.stockAmount('dollar') / self.market[name]
-            print 'can afford: ', can_afford, name
-            to_fill = min(to_fill, can_afford)
-            self.addToStock(name, market[name].takeout(to_fill))
-            self.takeFromStock('dollar', to_fill * self.market[name])
-
-
-def writeIndustryCycleDot(industries):
-    def arrow(first, second):
-        return '\n' + first + ' -> ' + second
-
-    out = 'digraph G {'
-    for ind_name, ind in industries.items():
-        out += '\n' + ind_name + ' [shape=box]'
-        out += arrow(ind_name, ind.output_name)
-        for in_name, inList in ind.input.items():
-            out += arrow(in_name, ind.name)
-    out += '\n}'
-    with open('ind_dep.dot', 'w') as f:
-        f.write(out)
+    def takeFromStock(self, name, amount):
+        self.addToStock(name, -amount)
+    
+    def __repr__(self):
+        return 'trader: %d, $%.2f %.2f unit' % (self.id, self.cash, self.stock)
 
 if __name__ == '__main__':
-    config = None
-    industries = {}
-    with open('industry_dep.yaml') as f:
-        config = yaml.load(f)
-        print config
-        for name, ind in config.items():
-            if name == 'Example':
-                continue
-            industries[name] = Industry(name, ind)
+    market = Market()
+    asks = [Industry(i, 100, 100) for i in xrange(5)] 
+    print asks
 
-    # writeIndustryCycleDot(industries)
+    print 'trading'
+    sells = [Trade('wood', 4, 30, asks[0]),
+             Trade('wood', 4, 40, asks[1]),
+             Trade('wood', 7, 30, asks[2])] 
+    buys = [Trade('wood', 6, 30, asks[3]),
+            Trade('wood', 2, 100, asks[4])]
 
-    # mines gets pre-existing ore, drilling gets wells
-    market = {'Waste': Value('waste')}
+    for sell in sells:
+        market.addToSell(sell)
+    for buy in buys:
+        market.addToBuy(buy)
 
-    # initialize commodities w/ cost from industries
-    market = {}  # need price and total worth in commodity
-    for ind in industries.values():
-        market[ind.output_name] = ind.price()
-        ind.market = market
+    market.tick()
 
-    while True:
-        for name, ind in industries.items():
-            output_name, output, price, waste = ind.produce()
-            ind.replenishStock(market)
-            market['Waste'] += waste
-            market.setdefault(output_name, Value(output_name))
-            market[output_name] += (output, price)
-            print '%s added %.2f' % (output_name, output)
-        for thing, num in market.items():
-            print '%s: %s' % (thing, num)
-        raw = raw_input('enter something: ')
+    for trader in asks:
+        print trader

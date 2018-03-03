@@ -1,6 +1,7 @@
 'models a rough economy'
 import yaml
 import math
+from market import Market, Trade
 
 range = xrange
 # basic system of industries being producer/consumers
@@ -112,7 +113,7 @@ class Industry:
             self.addToStockCost(name, cost)
     
     def takeFromStock(self, name, amount, cost):
-        self.addToStock(self, name, -amount, -cost)
+        self.addToStock(name, -amount, -cost)
 
     def priceOfStockUnit(self, name):
         return self.stockCost(name) / float(self.stockAmount(name))
@@ -169,21 +170,33 @@ class Industry:
         return fraction
 
     #### modifies actual data
-    def produce(self):
+    def produce(self, market):
+        'create outputs, add output/waste to market'
+        output, num_out, price, waste = self.makeOutput()
+        unit_price = price / float(num_out)
+        market.addToSell(Trade(output, unit_price, num_out, self)
+        market.addToSell(Trade('waste', .01, waste, self)
+    
+    def makeOutput(self):
         'get max output, consume equivalent inputs'
         output, num_out = self.getMaxOutput()
         total_cost = 0
-        for n in self.input_:
-            input_cost = self.pricePerOutput * num_out
+        for n in self.input_.keys():
+            input_cost = self.pricePerOutput() * num_out
             total_cost += input_cost
             num_inputs = self.inRate(n) * num_out
             self.takeFromStock(n, num_inputs, input_cost)
         profit = 1
-        return output, num_out, total_cost+profit
+        waste = self.waste() * num_out
+        return output, num_out, total_cost+profit, waste
 
     def replenishStock(self, market):
+        'for each stock not at max, purchase from market'
+        # TODO consider historical price: buy more at low price
+        # TODO buy least stocked item/most needed/most valuable
+        cash_on_hand = self.stockAmount('dollar')
         for name, e in self.stock.items():
-            if name not in market or name not in self.input_:
+            if name not in market.asks or name not in self.input_:
                 continue
             to_fill = self.replStockAmount(name)
             if to_fill == 0:
@@ -224,22 +237,22 @@ if __name__ == '__main__':
     # writeIndustryCycleDot(industries)
 
     # mines gets pre-existing ore, drilling gets wells
-    market = {'Waste': Value('waste')}
-
-    # initialize commodities w/ cost from industries
-    market = {}  # need price and total worth in commodity
-    for ind in industries.values():
-        market[ind.output_name] = ind.price()
-        ind.market = market
+    # market = {'Waste': Value('waste')}
+    market = Market()
 
     while True:
         for name, ind in industries.items():
-            output_name, output, price, waste = ind.produce()
+            ind.produce(market)
+        for name, ind in industries.items():
             ind.replenishStock(market)
-            market['Waste'] += waste
-            market.setdefault(output_name, Value(output_name))
-            market[output_name] += (output, price)
-            print '%s added %.2f' % (output_name, output)
+
+            # get rid of everything else?
+        #    output_name, output, price, waste = ind.produce()
+        #    ind.replenishStock(market)
+        #    market['Waste'] += waste
+        #    market.setdefault(output_name, Value(output_name))
+        #    market[output_name] += (output, price)
+        #    print '%s added %.2f' % (output_name, output)
         for thing, num in market.items():
             print '%s: %s' % (thing, num)
         raw = raw_input('enter something: ')

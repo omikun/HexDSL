@@ -1,9 +1,9 @@
 Example:
     stock:
-        oil_well: [amount, min, max, repl_rate]
+        oil_well: [amount, min, max, repl_rate, totalcost]
         # max, min are pref thresholds, 
         # repl_rate is replenish rate
-        energy: [amount, min, max, repl_rate]
+        energy: [amount, min, max, repl_rate, total_cost]
     oil:
         Input:
         # input consumed per turn = actual_output_rate * unit_per_out
@@ -19,9 +19,9 @@ Example:
         # actual_output_rate = frac * out_rate
 Drilling:
     stock:
-        oil_well: [1000, 0, 1000, 20]
-        energy: [100, 50, 200, 40]
-        dollar: [100, 0, 100, 0]
+        oil_well: [1000, 0, 1000, 20, 100]
+        energy: [100, 50, 200, 40, 1]
+        dollar: [100, 0, 100, 0, 100]
     oil:
         Input:
             energy: [2, 1]
@@ -33,9 +33,9 @@ Drilling:
                 #'oil_well', '*.1, log, +10, /10',]
 Mining:
     stock:
-        ore: [10000, 0, 1000, 0]
-        energy: [100, 10, 200, 15]
-        dollar: [100, 0, 100, 0]
+        ore: [10000, 0, 1000, 0, 10]
+        energy: [100, 10, 200, 15, 1]
+        dollar: [100, 0, 100, 0, 100]
     metal:
         Input:
             energy: [3, 1]
@@ -44,10 +44,10 @@ Mining:
         Waste: [2, 0]
 Manufacturer:
     stock:
-        metal: [10, 2, 20, 5]
-        petro: [10, 2, 10, 5]
-        energy: [40, 10, 40, 10]
-        dollar: [100, 0, 100, 0]
+        metal: [10, 2, 20, 5, 1]
+        petro: [10, 2, 10, 5, 1]
+        energy: [40, 10, 40, 10, .4]
+        dollar: [100, 0, 100, 0, 100]
     product:
         Input:
             metal: [2, 1]
@@ -57,9 +57,9 @@ Manufacturer:
         Waste: [2, 0]
 Lab:
     stock:
-        oil: [10, 5, 100, 40]
-        energy: [20, 5, 20, 10]
-        dollar: [100, 0, 100, 0]
+        oil: [10, 5, 100, 40, 1]
+        energy: [20, 5, 20, 10, .2]
+        dollar: [100, 0, 100, 0, 100]
     petro:
         Input: 
             oil: [4, 1]
@@ -68,8 +68,8 @@ Lab:
         Waste: [1, 0]
 PowerPlant:
     stock:
-        petro: [10, 2, 10, 20]
-        dollar: [100, 0, 100, 0]
+        petro: [10, 2, 10, 20, .1]
+        dollar: [100, 0, 100, 0, 100]
     energy:
         Input:
             petro: [.01, 1]
