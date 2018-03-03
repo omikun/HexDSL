@@ -26,6 +26,9 @@ def isany(m, a):
     print 'isany ', a
     return True
 
+def isVerb(m, a):
+    pass
+
 def parseListAttr(tokens):
     'list.attr'
     global c
@@ -60,12 +63,20 @@ def parseFilterListWithVal(tokens):
     lst = c[lst]
     return filter(lambda e: attr in e and e[attr] == val, lst)
 
-funcs = {'list': islist, 'attr': isattr, 'func': isfunc, 'any': isany}
+def parseVerb(tokens):
+    pass
+
+def scheduleVerb(tokens):
+    scheduler.addRecurring(parseVerb, tokens[:2])
+
+funcs = {'list': islist, 'attr': isattr, 'func': isfunc, 'any': isany, 'verb': isVerb}
 parserules = [('list attr'.split(' '), parseListAttr),
               ('list with attr == any'.split(' '), parseFilterListWithVal),
               ('list with attr in list'.split(' '), parseFilterListByMembership),
               ('list with attr'.split(' '), parseFilterList),
               ('list with func attr'.split(' '), parseReduceList),
+              ('verb num item every num turn').split(' '), scheduleVerb),
+              ('verb num item').split(' '), parseVerb),
               ]
 
 def parser(tokens):

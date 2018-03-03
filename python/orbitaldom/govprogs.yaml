@@ -1,0 +1,109 @@
+Discretionary:
+    military: 
+        budget: 500
+        effect:  # per billion spent on preferences
+            world_threat: 2
+            security: 1
+            immigration: .2
+            jobs: .8
+            bias: 4 # [-10,10] added to opinion sum before average
+    epa:
+        budget: 20
+        effect:
+            world_status: 2
+            jobs: -1
+            tech: .1
+            bias: -2
+    fda:
+        budget: 10
+        effect:
+            food: 1
+            bias: -1  # regulation
+    intelligence: 
+        budget: 50
+        effect:
+            spy: 2
+            privacy: -1
+            jobs: .2
+            bias: 1
+    surveillance:
+        budget:  10 
+        effect:
+            spy: 1
+            privacy: -2  # snowden leak could bump this way high
+            terror_event: -.1
+            jobs: .1
+            trust: -.1
+            bias: 0
+    agriculture: 
+        budget: 25
+        effect:
+            food: 2
+            jobs: -.4
+            bias: 3
+    space:
+        budget:  20
+        effect:
+            space_colonization: 1
+            jobs: 1
+            bias: 2
+    research: 
+        budget:  30
+        effect:
+            tech: 1
+            productivity: .2
+            jobs: 1
+            bias: 2
+    automation:
+        budget: 2
+        effect:
+            jobs: -4
+            tech: 1
+            productivity: 3
+            bias: -1
+            money: 2
+    privatization:
+        budget: 10
+        effect:
+            jobs: -2
+            tech: 2
+            productivity: 1.4
+            bias: 1
+            money: 1
+    healthcare:
+        budget: 50
+        effect:
+            health_costs: -1
+            jobs: 1
+            bias: 1
+    police: 
+        budget: 180
+        effect:
+            crime: -1
+            order: 1
+            jobs: 2
+            trust: 1
+            bias: 3
+    infrastructure:
+        budget: 120
+        effect:
+            roads: 1
+            trust: 1
+            jobs: 6
+            bias: 2
+    borderProtection:
+        budget: 10
+        effect:
+            trust: 1
+            immigration: -1
+            bias: 4
+Mandatory:
+    # these grow in proportion to retirees, sick, debt
+    socialwelfare:
+        budget: 900  # medicaid/medicare
+    socialsecurity: 
+        budget: 910
+    interest: 
+        budget: 241
+    Other: 
+        budget: 563
